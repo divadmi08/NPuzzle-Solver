@@ -1,0 +1,2 @@
+// bottone arresa 
+// tabella gioco
