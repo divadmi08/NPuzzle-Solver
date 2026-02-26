@@ -15,7 +15,7 @@ public class PuzzleState {
         this.griglia = griglia;
         int righe = griglia.length;
         int colonne = griglia[0].length;
-        this.grandezza = righe * colonne;
+        this.grandezza = griglia.length;
         trovaZero();
         this.GOAL = generaGoal(righe, colonne);
     }
@@ -54,19 +54,14 @@ public class PuzzleState {
         return Arrays.deepEquals(griglia,GOAL);
     }
 
-    public ArrayList<int[][]> getVicini() {
-        ArrayList<int[][]> lista = new ArrayList<>();
-        for (Move m : Move.values()) {
-            int nx = zeroX + m.getMovimentoX();
-            int ny = zeroY + m.getMovimentoY();
-            if (nx >= 0 && nx < griglia[0].length && ny >= 0 && ny < griglia.length) {
-                int[][] copia = copia();
-                copia[zeroY][zeroX] = copia[ny][nx];
-                copia[ny][nx] = 0;
-                lista.add(copia);
-            }
-        }
-        return lista;
+    public PuzzleState applicaMossa(Move move) {
+        int nx = zeroX + move.getMovimentoX();
+        int ny = zeroY + move.getMovimentoY();
+        if (nx < 0 || nx >= griglia[0].length || ny < 0 || ny >= griglia.length) return null;
+        int[][] nuovaGriglia = copia();
+        nuovaGriglia[zeroY][zeroX] = nuovaGriglia[ny][nx];
+        nuovaGriglia[ny][nx] = 0;
+        return new PuzzleState(nuovaGriglia);
     }
 
     private int[][] copia(){
