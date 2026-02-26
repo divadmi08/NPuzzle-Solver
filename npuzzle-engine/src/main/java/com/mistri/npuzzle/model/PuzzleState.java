@@ -8,21 +8,16 @@ public class PuzzleState {
     private int zeroX;
     private int zeroY;
     private int grandezza;
-    private final int[][] GOAL = {
-            {1, 2, 3},
-            {4, 5, 6},
-            {7, 8, 0}
-    };
+    private final int[][] GOAL;
+
 
     public PuzzleState(int[][] griglia) {
-        try{
-            this.griglia = griglia;
-            grandezza = griglia.length*griglia[0].length;
-            trovaZero();
-        } catch (RuntimeException e) {
-            throw new RuntimeException("inserisci una griglia valida");
-        }
-
+        this.griglia = griglia;
+        int righe = griglia.length;
+        int colonne = griglia[0].length;
+        this.grandezza = righe * colonne;
+        trovaZero();
+        this.GOAL = generaGoal(righe, colonne);
     }
 
     private void trovaZero(){
@@ -36,6 +31,21 @@ public class PuzzleState {
                 }
             }
         }
+    }
+
+
+    private int[][] generaGoal(int righe, int colonne) {
+        int[][] goal = new int[righe][colonne];
+        int valore = 1;
+        for (int y = 0; y < righe; y++) {
+            for (int x = 0; x < colonne; x++) {
+                if (y == righe - 1 && x == colonne - 1)
+                    goal[y][x] = 0;
+                else
+                    goal[y][x] = valore++;
+            }
+        }
+        return goal;
     }
 
 
