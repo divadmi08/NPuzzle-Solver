@@ -6,11 +6,11 @@ import { start, stop, reset, tick } from "../lib/features/timerSlice/timerSlice"
 
 export default function Timer() {
   const dispatch = useDispatch();
-  const time = useSelector((state) => state.timer.time);
-  const running = useSelector((state) => state.timer.running);
+  const time = useSelector((state: any) => state.timer.time);
+  const running = useSelector((state: any) => state.timer.running);
 
   useEffect(() => {
-    let interval: number;
+    let interval: ReturnType<typeof setInterval>;
 
     if (running) {
       interval = setInterval(() => {
