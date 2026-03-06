@@ -9,9 +9,13 @@
         <module name="puzzle-solver" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="npuzzle-engine" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="npuzzle-engine" options="-parameters" />
       <module name="puzzle-solver" options="-parameters" />
     </option>
   </component>
