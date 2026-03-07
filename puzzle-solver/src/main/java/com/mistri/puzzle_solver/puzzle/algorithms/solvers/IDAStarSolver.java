@@ -7,61 +7,74 @@ import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
 
 import java.util.ArrayList;
 
-
-public class IDAStarSolver implements Solver{
+public class IDAStarSolver implements Solver {
 
     private static final int FOUND = -1;
 
     @Override
-    public ArrayList<Move> solve(PuzzleState start){
-        Node nodoStart = new Node(start);
-        int soglia = nodoStart.getH();
-        int g = 0;
+    public ArrayList<Move> solve(PuzzleState start) {
+
+        Node startNode = new Node(start);
+
+        int threshold = startNode.getH();
         ArrayList<Move> path = new ArrayList<>();
 
-        while (true){
-            int tmp = dfs(nodoStart,soglia,g,path);
+        while (true) {
 
-            if (tmp == FOUND) return path;
+            int temp = dfs(startNode, 0, threshold, path, null);
 
-            if (tmp == Integer.MAX_VALUE) return null;
+            if (temp == FOUND)
+                return path;
 
-            soglia = tmp;
+            if (temp == Integer.MAX_VALUE)
+                return null;
+
+            threshold = temp;
         }
     }
 
-    private int dfs(Node nodo, int soglia, int g, ArrayList<Move> path){
-        int f = g + nodo.getH();
+    private int dfs(Node node,
+                    int g,
+                    int threshold,
+                    ArrayList<Move> path,
+                    Move lastMove) {
 
-        if (f > soglia) return f;
+        int f = g + node.getH();
 
-        if (nodo.getPuzzleState().isGoal()) return FOUND;
+        if (f > threshold)
+            return f;
+
+        if (node.getPuzzleState().isGoal())
+            return FOUND;
 
         int min = Integer.MAX_VALUE;
 
         for (Move move : Move.values()) {
 
-            PuzzleState next = nodo.getPuzzleState().applicaMossa(move);
+            // evita mosse opposte
+            if (lastMove != null && move.isOpposite(lastMove))
+                continue;
 
-            if (next == null) continue;
+            PuzzleState nextState = node.getPuzzleState().applicaMossa(move);
+
+            if (nextState == null)
+                continue;
+
+            Node nextNode = new Node(nextState);
 
             path.add(move);
 
-            int temp = dfs(new Node(next,nodo,move), soglia ,g + 1, path );
+            int temp = dfs(nextNode, g + 1, threshold, path, move);
 
-            if (temp == FOUND) {
+            if (temp == FOUND)
                 return FOUND;
-            }
 
-            if (temp < min) {
+            if (temp < min)
                 min = temp;
-            }
 
-            path.removeLast();
+            path.remove(path.size() - 1);
         }
 
         return min;
     }
-
-
 }

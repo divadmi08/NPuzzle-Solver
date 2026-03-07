@@ -22,4 +22,11 @@ public enum Move {
     public int getMovimentoX() {
         return movimentoX;
     }
+
+    public boolean isOpposite(Move other) {
+        return (this == SOPRA && other == SOTTO) ||
+                (this == SOTTO && other == SOPRA) ||
+                (this == SINISTRA && other == DESTRA) ||
+                (this == DESTRA && other == SINISTRA);
+    }
 }

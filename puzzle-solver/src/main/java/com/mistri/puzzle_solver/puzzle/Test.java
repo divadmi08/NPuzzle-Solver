@@ -11,7 +11,7 @@ public class Test {
         Solver idaStar = new IDAStarSolver();
         PuzzleState p = PuzzleGenerator.generaPuzzle(4,200);
         System.out.println(p);
-        System.out.println(aStar.solve(p));
+        System.out.println(idaStar.solve(p));
 
     }
 }

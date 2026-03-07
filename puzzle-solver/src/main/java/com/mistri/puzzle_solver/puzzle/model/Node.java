@@ -1,27 +1,26 @@
 package com.mistri.puzzle_solver.puzzle.model;
 
 import com.mistri.puzzle_solver.puzzle.algorithms.Heuristic;
-import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
-import com.mistri.puzzle_solver.puzzle.model.Move;
+
 
 public class Node implements Comparable<Node>{
-    private PuzzleState puzzleState;
-    private Node nodoPadre;
-    private Move mossaPrecedente;
-    int g;//passi precedenti
-    int h;//previsione manhattan
-    int f;//g + f
 
-    public Node(PuzzleState puzzleState, Node nodoPadre, Move mossaPrecedente ){
+    private final PuzzleState puzzleState;
+    private final Node nodoPadre;
+    private final Move mossaPrecedente;
+
+    private final int g;
+    private final int h;
+    private final int f;
+
+    public Node(PuzzleState puzzleState, Node nodoPadre, Move mossaPrecedente){
         this.puzzleState = puzzleState;
         this.nodoPadre = nodoPadre;
         this.mossaPrecedente = mossaPrecedente;
-        if(nodoPadre == null){
-            this.g = 0;
-        } else {
-            this.g = nodoPadre.getG() + 1;
-        }
-        this.h = Heuristic.manhattan(puzzleState);
+
+        this.g = (nodoPadre == null) ? 0 : nodoPadre.g + 1;
+
+        this.h = Heuristic.manhattanLinearConflict(puzzleState);
         this.f = g + h;
     }
 
@@ -36,27 +35,15 @@ public class Node implements Comparable<Node>{
         return Integer.compare(this.h, altro.h);
     }
 
-    public int getG() {
-        return g;
-    }
+    public int getG() { return g; }
 
-    public int getH() {
-        return h;
-    }
+    public int getH() { return h; }
 
-    public int getF() {
-        return f;
-    }
+    public int getF() { return f; }
 
-    public Node getNodoPadre() {
-        return nodoPadre;
-    }
+    public Node getNodoPadre() { return nodoPadre; }
 
-    public Move getMossaPrecedente() {
-        return mossaPrecedente;
-    }
+    public Move getMossaPrecedente() { return mossaPrecedente; }
 
-    public PuzzleState getPuzzleState() {
-        return puzzleState;
-    }
+    public PuzzleState getPuzzleState() { return puzzleState; }
 }
