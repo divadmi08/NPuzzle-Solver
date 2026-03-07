@@ -26,17 +26,34 @@ public class AStarSolver implements Solver {
     public List<Move> solve(PuzzleState start) {
         PriorityQueue<Node> codaOpen = new PriorityQueue<>();
         HashSet<PuzzleState> setClosed = new HashSet<>();
+        HashMap<PuzzleState, Integer> bestG = new HashMap<>();  // AGGIUNGI
+
         codaOpen.add(new Node(start, null, null));
+        bestG.put(start, 0);  // AGGIUNGI
+
         while (!codaOpen.isEmpty()) {
             Node nodo = codaOpen.poll();
+
             if (nodo.getPuzzleState().isGoal()) return ritrovaPath(nodo);
+
+            // AGGIUNGI questo controllo:
+            if (nodo.getG() > bestG.getOrDefault(nodo.getPuzzleState(), Integer.MAX_VALUE))
+                continue;
+
             setClosed.add(nodo.getPuzzleState());
+
             for (Move move : Move.values()) {
                 PuzzleState vicini = nodo.getPuzzleState().applicaMossa(move);
-                if (vicini == null)
+                if (vicini == null) continue;
+                if (setClosed.contains(vicini)) continue;
+
+                int nuovoG = nodo.getG() + 1;
+
+                // AGGIUNGI questo controllo:
+                if (nuovoG >= bestG.getOrDefault(vicini, Integer.MAX_VALUE))
                     continue;
-                if (setClosed.contains(vicini))
-                    continue;
+
+                bestG.put(vicini, nuovoG);  // AGGIUNGI
                 Node figlio = new Node(vicini, nodo, move);
                 codaOpen.add(figlio);
             }

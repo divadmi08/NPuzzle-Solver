@@ -27,25 +27,19 @@ public class PuzzleGenerator {
 
         for (int i = 0; i < numMosse; i++) {
             Move[] mossePossibili = Move.values();
+            PuzzleState nuovo = null;
             Move mossa;
             do {
                 mossa = mossePossibili[random.nextInt(mossePossibili.length)];
-            } while (puzzle.applicaMossa(mossa) == null || (ultimaMossa != null && sonoMosseOpposte(mossa, ultimaMossa)));
+                if (ultimaMossa == null || !mossa.isOpposite(ultimaMossa)) {
+                    nuovo = puzzle.applicaMossa(mossa);
+                }
+            } while (nuovo == null);
 
-            PuzzleState nuovo = puzzle.applicaMossa(mossa);
-            if (nuovo != null) {
-                puzzle = nuovo;
-                ultimaMossa = mossa;
-            }
+            puzzle = nuovo;
+            ultimaMossa = mossa;
         }
 
         return puzzle;
-    }
-
-    private static boolean sonoMosseOpposte(Move a, Move b) {
-        return (a == Move.SOPRA && b == Move.SOTTO) ||
-                (a == Move.SOTTO && b == Move.SOPRA) ||
-                (a == Move.SINISTRA && b == Move.DESTRA) ||
-                (a == Move.DESTRA && b == Move.SINISTRA);
     }
 }

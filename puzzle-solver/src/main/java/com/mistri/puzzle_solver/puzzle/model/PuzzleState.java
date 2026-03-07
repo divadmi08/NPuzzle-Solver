@@ -1,14 +1,14 @@
 package com.mistri.puzzle_solver.puzzle.model;
 
 import java.util.Arrays;
-import com.mistri.puzzle_solver.puzzle.model.Move;
 
 public class PuzzleState {
     private final int[][] griglia;
     private int zeroX;
     private int zeroY;
     private int grandezza;
-    private final int[][] GOAL;
+    private static int[][] GOAL;
+    private static int cachedSize = -1;
 
 
     public PuzzleState(int[][] griglia) {
@@ -17,7 +17,10 @@ public class PuzzleState {
         int colonne = griglia[0].length;
         this.grandezza = griglia.length;
         trovaZero();
-        this.GOAL = generaGoal(righe, colonne);
+        if (cachedSize != grandezza) {
+            GOAL = generaGoal(righe, colonne);
+            cachedSize = grandezza;
+        }
     }
 
     private void trovaZero(){
