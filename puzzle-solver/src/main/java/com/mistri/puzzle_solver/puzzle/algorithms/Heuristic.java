@@ -1,98 +1,100 @@
 package com.mistri.puzzle_solver.puzzle.algorithms;
 
 import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
+import org.springframework.stereotype.Component;
+import com.mistri.puzzle_solver.puzzle.PDB.PDBLoader;
 
+import java.util.Set;
 
+@Component
 public class Heuristic {
 
-    public static int manhattanLinearConflict(PuzzleState state) {
+    private final PDBLoader loader;
 
-        int distanza = manhattan(state);
-        int conflict = 0;
-
-        int[][] grid = state.getGriglia();
-        int size = state.getGrandezza();
-
-        // controlla righe
-        for (int r = 0; r < size; r++) {
-
-            for (int c1 = 0; c1 < size; c1++) {
-
-                int t1 = grid[r][c1];
-                if (t1 == 0) continue;
-
-                int goalRow1 = (t1 - 1) / size;
-                int goalCol1 = (t1 - 1) % size;
-
-                if (goalRow1 != r) continue;
-
-                for (int c2 = c1 + 1; c2 < size; c2++) {
-
-                    int t2 = grid[r][c2];
-                    if (t2 == 0) continue;
-
-                    int goalRow2 = (t2 - 1) / size;
-                    int goalCol2 = (t2 - 1) % size;
-
-                    if (goalRow2 == r && goalCol1 > goalCol2) {
-                        conflict++;
-                    }
-                }
-            }
-        }
-
-        // controlla colonne
-        for (int c = 0; c < size; c++) {
-
-            for (int r1 = 0; r1 < size; r1++) {
-
-                int t1 = grid[r1][c];
-                if (t1 == 0) continue;
-
-                int goalRow1 = (t1 - 1) / size;
-                int goalCol1 = (t1 - 1) % size;
-
-                if (goalCol1 != c) continue;
-
-                for (int r2 = r1 + 1; r2 < size; r2++) {
-
-                    int t2 = grid[r2][c];
-                    if (t2 == 0) continue;
-
-                    int goalRow2 = (t2 - 1) / size;
-                    int goalCol2 = (t2 - 1) % size;
-
-                    if (goalCol2 == c && goalRow1 > goalRow2) {
-                        conflict++;
-                    }
-                }
-            }
-        }
-
-        return distanza + 2 * conflict;
+    public Heuristic(PDBLoader loader) {
+        this.loader = loader;
     }
 
+    public int heuristic(PuzzleState state, Set<Integer> patternSet) {
+        return heuristic(state.getTiles(), state.getGrandezza(), patternSet);
+    }
 
-    public static int manhattan(PuzzleState state){
+    public int heuristic(int[] tiles, int size, Set<Integer> patternSet) {
+        int manhattan = manhattan(tiles, size);
+        int linearConflict = linearConflict(tiles, size);
+        int pdbValue = lookupPDB(tiles, size, patternSet);
+        return Math.max(manhattan + linearConflict, pdbValue);
+    }
 
+    private int manhattan(int[] tiles, int size) {
         int distanza = 0;
-        int size = state.getGrandezza();
-        int[][] grid = state.getGriglia();
+        for (int index = 0; index < size * size; index++) {
+            int value = tiles[index];
+            if (value == 0) {
+                continue;
+            }
+            int row = index / size;
+            int col = index % size;
+            int targetRow = (value - 1) / size;
+            int targetCol = (value - 1) % size;
+            distanza += Math.abs(row - targetRow) + Math.abs(col - targetCol);
+        }
+        return distanza;
+    }
 
-        for(int r = 0; r < size; r++){
-            for(int c = 0; c < size; c++){
+    private int linearConflict(int[] tiles, int size) {
+        int conflicts = 0;
 
-                int value = grid[r][c];
-
-                if(value == 0) continue;
-
-                int targetRow = (value - 1) / size;
-                int targetCol = (value - 1) % size;
-
-                distanza += Math.abs(r - targetRow) + Math.abs(c - targetCol);
+        for (int row = 0; row < size; row++) {
+            for (int colA = 0; colA < size; colA++) {
+                int tileA = tiles[row * size + colA];
+                if (tileA == 0 || targetRow(tileA, size) != row) {
+                    continue;
+                }
+                int targetColA = targetCol(tileA, size);
+                for (int colB = colA + 1; colB < size; colB++) {
+                    int tileB = tiles[row * size + colB];
+                    if (tileB == 0 || targetRow(tileB, size) != row) {
+                        continue;
+                    }
+                    if (targetColA > targetCol(tileB, size)) {
+                        conflicts++;
+                    }
+                }
             }
         }
 
-        return distanza;
+        for (int col = 0; col < size; col++) {
+            for (int rowA = 0; rowA < size; rowA++) {
+                int tileA = tiles[rowA * size + col];
+                if (tileA == 0 || targetCol(tileA, size) != col) {
+                    continue;
+                }
+                int targetRowA = targetRow(tileA, size);
+                for (int rowB = rowA + 1; rowB < size; rowB++) {
+                    int tileB = tiles[rowB * size + col];
+                    if (tileB == 0 || targetCol(tileB, size) != col) {
+                        continue;
+                    }
+                    if (targetRowA > targetRow(tileB, size)) {
+                        conflicts++;
+                    }
+                }
+            }
+        }
+
+        return conflicts * 2;
+    }
+
+    private int targetRow(int tile, int size) {
+        return (tile - 1) / size;
+    }
+
+    private int targetCol(int tile, int size) {
+        return (tile - 1) % size;
+    }
+
+    private int lookupPDB(int[] tiles, int size, Set<Integer> patternSet) {
+        return loader.estimate(tiles, size, patternSet);
     }
 }

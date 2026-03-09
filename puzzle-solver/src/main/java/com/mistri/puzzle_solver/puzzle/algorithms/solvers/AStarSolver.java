@@ -1,75 +1,70 @@
 package com.mistri.puzzle_solver.puzzle.algorithms.solvers;
 
 import com.mistri.puzzle_solver.puzzle.algorithms.Solver;
+import com.mistri.puzzle_solver.puzzle.algorithms.Heuristic;
 import com.mistri.puzzle_solver.puzzle.model.Move;
 import com.mistri.puzzle_solver.puzzle.model.Node;
 import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+@Component
 public class AStarSolver implements Solver {
-    //crea open PQ
-    //crea closed HashSet
-    //inserisci start node in open
 
-    //LOOP:
-    //prendi nodo migliore con poll()
-    //se è goal → fine
-    //aggiungi state al closed
-    //genera vicini
-    //per ogni vicino:
-    //se non in closed
-    //crea Node
-    //aggiungi a open
+    private final Heuristic heuristic;
+
+    public AStarSolver(Heuristic heuristic) {
+        this.heuristic = heuristic;
+    }
 
     @Override
-    public List<Move> solve(PuzzleState start) {
-        PriorityQueue<Node> codaOpen = new PriorityQueue<>();
-        HashSet<PuzzleState> setClosed = new HashSet<>();
-        HashMap<PuzzleState, Integer> bestG = new HashMap<>();  // AGGIUNGI
+    public List<Move> solve(PuzzleState start, Set<Integer> patternSet) {
+        if (!start.isSolvable()) {
+            return null;
+        }
 
-        codaOpen.add(new Node(start, null, null));
-        bestG.put(start, 0);  // AGGIUNGI
+        PriorityQueue<Node> open = new PriorityQueue<>();
+        HashSet<PuzzleState> closed = new HashSet<>();
+        HashMap<PuzzleState, Integer> bestG = new HashMap<>();
 
-        while (!codaOpen.isEmpty()) {
-            Node nodo = codaOpen.poll();
+        Node startNode = new Node(start, heuristic.heuristic(start, patternSet));
+        open.add(startNode);
+        bestG.put(start, 0);
 
-            if (nodo.getPuzzleState().isGoal()) return ritrovaPath(nodo);
+        while (!open.isEmpty()) {
+            Node node = open.poll();
+            if (node.getPuzzleState().isGoal()) return retrivePath(node);
 
-            // AGGIUNGI questo controllo:
-            if (nodo.getG() > bestG.getOrDefault(nodo.getPuzzleState(), Integer.MAX_VALUE))
+            if (node.getG() > bestG.getOrDefault(node.getPuzzleState(), Integer.MAX_VALUE))
                 continue;
 
-            setClosed.add(nodo.getPuzzleState());
+            closed.add(node.getPuzzleState());
 
             for (Move move : Move.values()) {
-                PuzzleState vicini = nodo.getPuzzleState().applicaMossa(move);
-                if (vicini == null) continue;
-                if (setClosed.contains(vicini)) continue;
+                PuzzleState nextState = node.getPuzzleState().applicaMossa(move);
+                if (nextState == null || closed.contains(nextState)) continue;
 
-                int nuovoG = nodo.getG() + 1;
+                int g = node.getG() + 1;
+                if (g >= bestG.getOrDefault(nextState, Integer.MAX_VALUE)) continue;
 
-                // AGGIUNGI questo controllo:
-                if (nuovoG >= bestG.getOrDefault(vicini, Integer.MAX_VALUE))
-                    continue;
-
-                bestG.put(vicini, nuovoG);  // AGGIUNGI
-                Node figlio = new Node(vicini, nodo, move);
-                codaOpen.add(figlio);
+                bestG.put(nextState, g);
+                int h = heuristic.heuristic(nextState, patternSet);
+                Node nextNode = new Node(nextState, node, move, h);
+                open.add(nextNode);
             }
         }
+
         return null;
     }
 
-    public List<Move> ritrovaPath(Node nodoFinale) {
-        List<Move> listaMosse = new ArrayList<>();
-        Node nodo = nodoFinale;
-        while (nodo.getNodoPadre() != null) {
-            listaMosse.add(nodo.getMossaPrecedente());
-            nodo = nodo.getNodoPadre();
+    private List<Move> retrivePath(Node node) {
+        List<Move> moves = new ArrayList<>();
+        while (node.getNodoPadre() != null) {
+            moves.add(node.getMossaPrecedente());
+            node = node.getNodoPadre();
         }
-        Collections.reverse(listaMosse);
-        return listaMosse;
+        Collections.reverse(moves);
+        return moves;
     }
-
 }

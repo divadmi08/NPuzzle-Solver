@@ -3,124 +3,166 @@ package com.mistri.puzzle_solver.puzzle.model;
 import java.util.Arrays;
 
 public class PuzzleState {
-    private final int[][] griglia;
-    private int zeroX;
-    private int zeroY;
-    private int grandezza;
-    private static int[][] GOAL;
-    private static int cachedSize = -1;
 
+    private final int[] tiles;
+    private final int size;
+    private final int zeroPos;
+    private final int hashCode;
 
     public PuzzleState(int[][] griglia) {
-        this.griglia = griglia;
-        int righe = griglia.length;
-        int colonne = griglia[0].length;
-        this.grandezza = griglia.length;
-        trovaZero();
-        if (cachedSize != grandezza) {
-            GOAL = generaGoal(righe, colonne);
-            cachedSize = grandezza;
-        }
+        this(flatten(griglia), griglia.length);
     }
 
-    private void trovaZero(){
-        for (int y = 0; y < griglia.length; y++){
-            for (int x = 0; x < griglia[y].length; x++){
-                if (griglia[y][x] == 0){
-                    this.zeroX = x;
-                    this.zeroY = y;
-                    y = griglia.length;
-                    break;
-                }
+    private PuzzleState(int[] tiles, int size) {
+        this(tiles, size, findZero(tiles));
+    }
+
+    private PuzzleState(int[] tiles, int size, int zeroPos) {
+        this.tiles = tiles;
+        this.size = size;
+        this.zeroPos = zeroPos;
+        this.hashCode = Arrays.hashCode(tiles);
+    }
+
+    private static int[] flatten(int[][] grid) {
+        int size = grid.length;
+        int[] flat = new int[size * size];
+        int index = 0;
+        for (int[] row : grid) {
+            for (int value : row) {
+                flat[index++] = value;
             }
         }
+        return flat;
     }
 
-
-    private int[][] generaGoal(int righe, int colonne) {
-        int[][] goal = new int[righe][colonne];
-        int valore = 1;
-        for (int y = 0; y < righe; y++) {
-            for (int x = 0; x < colonne; x++) {
-                if (y == righe - 1 && x == colonne - 1)
-                    goal[y][x] = 0;
-                else
-                    goal[y][x] = valore++;
+    private static int findZero(int[] tiles) {
+        for (int i = 0; i < tiles.length; i++) {
+            if (tiles[i] == 0) {
+                return i;
             }
         }
-        return goal;
+        throw new IllegalArgumentException("Puzzle senza zero");
     }
 
-
-
-    public boolean isGoal(){
-        return Arrays.deepEquals(griglia,GOAL);
+    public boolean isGoal() {
+        int last = tiles.length - 1;
+        for (int i = 0; i < last; i++) {
+            if (tiles[i] != i + 1) {
+                return false;
+            }
+        }
+        return tiles[last] == 0;
     }
 
     public PuzzleState applicaMossa(Move move) {
-        int nx = zeroX + move.getMovimentoX();
-        int ny = zeroY + move.getMovimentoY();
-        if (nx < 0 || nx >= griglia[0].length || ny < 0 || ny >= griglia.length) return null;
-        int[][] nuovaGriglia = copia();
-        nuovaGriglia[zeroY][zeroX] = nuovaGriglia[ny][nx];
-        nuovaGriglia[ny][nx] = 0;
-        return new PuzzleState(nuovaGriglia);
-    }
-
-    private int[][] copia(){
-        int[][] copia = new int[griglia.length][griglia[0].length];
-        for (int i = 0; i < griglia.length; i++){
-            copia[i] = griglia[i].clone();
+        int zeroRow = zeroPos / size;
+        int zeroCol = zeroPos % size;
+        int nextRow = zeroRow + move.getMovimentoY();
+        int nextCol = zeroCol + move.getMovimentoX();
+        if (nextRow < 0 || nextRow >= size || nextCol < 0 || nextCol >= size) {
+            return null;
         }
-        return copia;
-    }
 
+        int nextZeroPos = nextRow * size + nextCol;
+        int[] nextTiles = tiles.clone();
+        nextTiles[zeroPos] = nextTiles[nextZeroPos];
+        nextTiles[nextZeroPos] = 0;
+        return new PuzzleState(nextTiles, size, nextZeroPos);
+    }
 
     @Override
     public boolean equals(Object obj) {
-
-        if (this == obj) return true;
-
-        if (obj == null || getClass() != obj.getClass())
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof PuzzleState other)) {
             return false;
-
-        PuzzleState other = (PuzzleState) obj;
-
-        return Arrays.deepEquals(griglia, other.griglia);
+        }
+        return Arrays.equals(tiles, other.tiles);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.deepHashCode(griglia);
+        return hashCode;
     }
 
-
     public int getZeroY() {
-        return zeroY;
+        return zeroPos / size;
     }
 
     public int getZeroX() {
-        return zeroX;
+        return zeroPos % size;
     }
 
     public int getGrandezza() {
-        return grandezza;
+        return size;
     }
 
     public int[][] getGriglia() {
-        return griglia;
+        int[][] grid = new int[size][size];
+        for (int i = 0; i < tiles.length; i++) {
+            grid[i / size][i % size] = tiles[i];
+        }
+        return grid;
+    }
+
+    public int[] getTiles() {
+        return tiles.clone();
+    }
+
+    public int getTileAt(int index) {
+        return tiles[index];
+    }
+
+    public int getZeroPos() {
+        return zeroPos;
+    }
+
+    public boolean isSolvable() {
+        int inversions = countInversions(tiles);
+        if ((size & 1) == 1) {
+            return (inversions & 1) == 0;
+        }
+
+        int blankRowFromBottom = size - (zeroPos / size);
+        boolean blankOnEvenRowFromBottom = (blankRowFromBottom & 1) == 0;
+        boolean inversionsEven = (inversions & 1) == 0;
+        return blankOnEvenRowFromBottom != inversionsEven;
+    }
+
+    public static long encode(int[] tiles) {
+        long encoded = 0L;
+        for (int i = 0; i < tiles.length; i++) {
+            encoded |= ((long) tiles[i] & 0xFL) << (i * 4);
+        }
+        return encoded;
+    }
+
+    private static int countInversions(int[] tiles) {
+        int inversions = 0;
+        for (int i = 0; i < tiles.length; i++) {
+            if (tiles[i] == 0) {
+                continue;
+            }
+            for (int j = i + 1; j < tiles.length; j++) {
+                if (tiles[j] != 0 && tiles[i] > tiles[j]) {
+                    inversions++;
+                }
+            }
+        }
+        return inversions;
     }
 
     @Override
-    public String toString(){
-        String stringa = "";
-        for (int[] l : griglia){
-            for (int n : l){
-                stringa += n + " ";
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < tiles.length; i++) {
+            builder.append(tiles[i]).append(' ');
+            if ((i + 1) % size == 0) {
+                builder.append('\n');
             }
-            stringa += "\n";
         }
-        return stringa;
+        return builder.toString();
     }
-
 }

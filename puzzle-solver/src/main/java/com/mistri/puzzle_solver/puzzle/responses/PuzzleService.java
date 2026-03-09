@@ -21,12 +21,4 @@ public class PuzzleService {
         return PuzzleGenerator.generaPuzzle(size, 100);
     }
 
-    @PostMapping("/solve")
-    public List<Move> solvePuzzle(
-            @RequestBody int[][] matrix
-            ) {
-        PuzzleState start = new PuzzleState(matrix);
-        AStarSolver solver = new AStarSolver();
-        return solver.solve(start);
-    }
 }
