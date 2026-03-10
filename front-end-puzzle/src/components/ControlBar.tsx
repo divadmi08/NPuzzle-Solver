@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import type { RootState } from "../lib/store";
+import { setSize } from "@/lib/features/timerSlice/tableSizeSlice";
 
 interface Props {
   moves: number;

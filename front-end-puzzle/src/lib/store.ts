@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import timerReducer from "./features/timerSlice/timerSlice";
-import tableSizeReducer from "./features/tableSizeSlice";
+import tableSizeReducer from "./features/timerSlice/tableSizeSlice";
 
 export const store = configureStore({
   reducer: {
