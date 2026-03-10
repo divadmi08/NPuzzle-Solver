@@ -16,7 +16,7 @@ public class Heuristic {
     }
 
     public int heuristic(PuzzleState state, Set<Integer> patternSet) {
-        return heuristic(state.getTiles(), state.getGrandezza(), patternSet);
+        return heuristic(state.getTilesUnsafe(), state.getGrandezza(), patternSet);
     }
 
     public int heuristic(int[] tiles, int size, Set<Integer> patternSet) {

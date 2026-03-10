@@ -111,6 +111,11 @@ public class PuzzleState {
         return tiles.clone();
     }
 
+    // Returns the internal array for read-only use to avoid copying in hot paths.
+    public int[] getTilesUnsafe() {
+        return tiles;
+    }
+
     public int getTileAt(int index) {
         return tiles[index];
     }

@@ -1,7 +1,6 @@
 package com.mistri.puzzle_solver.puzzle;
 
 import com.mistri.puzzle_solver.puzzle.algorithms.Heuristic;
-import com.mistri.puzzle_solver.puzzle.PDB.PDBLoader;
 import com.mistri.puzzle_solver.puzzle.algorithms.solvers.AStarSolver;
 import com.mistri.puzzle_solver.puzzle.algorithms.solvers.IDAStarSolver;
 import com.mistri.puzzle_solver.puzzle.model.Move;
@@ -18,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SolverRegressionTests {
 
-    private static final Heuristic heuristic = createHeuristic();
+    private static final Heuristic heuristic = TestPdbSupport.HEURISTIC;
     private final AStarSolver aStarSolver = new AStarSolver(heuristic);
     private final IDAStarSolver idaStarSolver = new IDAStarSolver(heuristic);
 
@@ -136,14 +135,6 @@ class SolverRegressionTests {
             current = current.applicaMossa(move);
         }
         return current;
-    }
-
-    private static Heuristic createHeuristic() {
-        try {
-            return new Heuristic(new PDBLoader());
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to create heuristic for tests", e);
-        }
     }
 
     private void printSolution(String solverName, PuzzleState start, List<Move> solution, PuzzleState endState) {

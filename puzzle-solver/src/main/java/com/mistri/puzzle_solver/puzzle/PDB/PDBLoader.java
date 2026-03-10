@@ -18,6 +18,9 @@ public class PDBLoader {
     private static final int[] PATTERN_C = {13, 14, 15};
 
     private final List<PatternEstimator> databases;
+    private final long loadElapsedMs;
+    private final long totalStates;
+    private final String modeDescription;
 
     public PDBLoader() {
         this("");
@@ -26,14 +29,14 @@ public class PDBLoader {
     public PDBLoader(@Value("${puzzle.pdb.dir:}") String pdbDir) {
         long start = System.nanoTime();
         this.databases = loadDatabases(pdbDir);
-        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
-        long totalStates = databases.stream().mapToLong(PatternEstimator::stateCount).sum();
-        String mode = databases.stream()
+        this.loadElapsedMs = (System.nanoTime() - start) / 1_000_000;
+        this.totalStates = databases.stream().mapToLong(PatternEstimator::stateCount).sum();
+        this.modeDescription = databases.stream()
                 .map(PatternEstimator::description)
                 .reduce((a, b) -> a + "; " + b)
                 .orElse("none");
-        System.out.println("PDB caricati: " + databases.size() + " pattern, " + totalStates + " stati in " + elapsedMs + " ms");
-        System.out.println("PDB mode: " + mode);
+        System.out.println("PDB caricati: " + databases.size() + " pattern, " + totalStates + " stati in " + loadElapsedMs + " ms");
+        System.out.println("PDB mode: " + modeDescription);
     }
 
     public int estimate(int[] tiles, int size, Set<Integer> patternSet) {
@@ -100,5 +103,17 @@ public class PDBLoader {
             segments.add(segment);
         }
         return segments;
+    }
+
+    public long getLoadElapsedMs() {
+        return loadElapsedMs;
+    }
+
+    public long getTotalStates() {
+        return totalStates;
+    }
+
+    public String getModeDescription() {
+        return modeDescription;
     }
 }
