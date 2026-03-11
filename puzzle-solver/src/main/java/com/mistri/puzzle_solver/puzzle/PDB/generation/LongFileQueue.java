@@ -1,4 +1,4 @@
-package com.mistri.puzzle_solver.puzzle.PDB;
+package com.mistri.puzzle_solver.puzzle.PDB.generation;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -7,15 +7,15 @@ import java.nio.file.Path;
 
 final class LongFileQueue implements AutoCloseable {
 
-    private final Path path;
+    private final Path percorso;
     private final RandomAccessFile file;
-    private long readPosition;
+    private long posizioneLettura;
 
     LongFileQueue(Path path) throws IOException {
-        this.path = path;
+        this.percorso = path;
         Files.createDirectories(path.getParent());
         this.file = new RandomAccessFile(path.toFile(), "rw");
-        this.readPosition = 0L;
+        this.posizioneLettura = 0L;
     }
 
     void add(long value) throws IOException {
@@ -24,13 +24,13 @@ final class LongFileQueue implements AutoCloseable {
     }
 
     boolean hasMore() throws IOException {
-        return readPosition < file.length();
+        return posizioneLettura < file.length();
     }
 
     long remove() throws IOException {
-        file.seek(readPosition);
+        file.seek(posizioneLettura);
         long value = file.readLong();
-        readPosition += Long.BYTES;
+        posizioneLettura += Long.BYTES;
         return value;
     }
 
@@ -40,12 +40,12 @@ final class LongFileQueue implements AutoCloseable {
 
     void resetForReuse() throws IOException {
         file.setLength(0L);
-        readPosition = 0L;
+        posizioneLettura = 0L;
     }
 
     void deleteFile() throws IOException {
         close();
-        Files.deleteIfExists(path);
+        Files.deleteIfExists(percorso);
     }
 
     @Override

@@ -2,7 +2,7 @@ package com.mistri.puzzle_solver.puzzle.algorithms;
 
 import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
 import org.springframework.stereotype.Component;
-import com.mistri.puzzle_solver.puzzle.PDB.PDBLoader;
+import com.mistri.puzzle_solver.puzzle.PDB.runtime.PDBLoader;
 
 import java.util.Set;
 

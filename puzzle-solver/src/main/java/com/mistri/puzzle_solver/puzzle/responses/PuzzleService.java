@@ -1,7 +1,7 @@
 package com.mistri.puzzle_solver.puzzle.responses;
 
 import com.mistri.puzzle_solver.puzzle.PuzzleGenerator;
-import com.mistri.puzzle_solver.puzzle.PDB.PDBLoader;
+import com.mistri.puzzle_solver.puzzle.PDB.runtime.PDBLoader;
 import com.mistri.puzzle_solver.puzzle.algorithms.solvers.AStarSolver;
 import com.mistri.puzzle_solver.puzzle.algorithms.solvers.IDAStarSolver;
 import com.mistri.puzzle_solver.puzzle.model.Move;
