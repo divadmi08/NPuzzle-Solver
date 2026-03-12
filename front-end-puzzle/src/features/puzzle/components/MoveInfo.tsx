@@ -1,10 +1,11 @@
-import { usePuzzleStore } from '../store/usePuzzleStore';
-import { DIRECTION_LABELS } from '../constants/puzzle';
+import { memo } from 'react';
+import { useStep, useTotalSteps, useCurrentMove } from '@/features/puzzle/store/puzzleSelectors';
+import { DIRECTION_LABELS } from '@/features/puzzle/constants/puzzle';
 
-export default function MoveInfo() {
-  const step = usePuzzleStore(s => s.step);
-  const totalSteps = usePuzzleStore(s => s.totalSteps);
-  const currentMove = usePuzzleStore(s => s.currentMove);
+const MoveInfo = memo(function MoveInfo() {
+  const step = useStep();
+  const totalSteps = useTotalSteps();
+  const currentMove = useCurrentMove();
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 bg-gray-800/80 px-3 sm:px-5 py-2 sm:py-3 rounded-xl border border-gray-700/60">
@@ -27,4 +28,6 @@ export default function MoveInfo() {
       )}
     </div>
   );
-}
+});
+
+export default MoveInfo;

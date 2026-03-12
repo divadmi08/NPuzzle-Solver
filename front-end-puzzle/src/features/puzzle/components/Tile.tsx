@@ -1,22 +1,28 @@
-import { TILE_COLORS } from '../constants/puzzle';
+import { memo } from 'react';
+import { TILE_COLORS_BY_MODE } from '@/features/puzzle/constants/puzzle';
+import { useColorPaletteMode } from '@/features/puzzle/store/puzzleSelectors';
 
 interface TileProps {
   value: number;
   isMoving: boolean;
 }
 
-export default function Tile({ value, isMoving }: TileProps) {
+const Tile = memo(function Tile({ value, isMoving }: TileProps) {
+  const colorPaletteMode = useColorPaletteMode();
+
   if (value === 0) {
     return (
       <div className="aspect-square rounded-lg sm:rounded-xl bg-gray-800/40 border-2 border-dashed border-gray-600/50" />
     );
   }
 
+  const palette = TILE_COLORS_BY_MODE[colorPaletteMode];
+
   return (
     <div
       className={`
         aspect-square rounded-lg sm:rounded-xl
-        bg-gradient-to-br ${TILE_COLORS[value] || 'from-gray-500 to-gray-600'}
+        bg-gradient-to-br ${palette[value] || 'from-gray-500 to-gray-600'}
         shadow-lg flex items-center justify-center text-white font-bold
         text-lg sm:text-2xl md:text-3xl
         border border-white/20 transition-all duration-300
@@ -26,4 +32,6 @@ export default function Tile({ value, isMoving }: TileProps) {
       {value}
     </div>
   );
-}
+});
+
+export default Tile;

@@ -1,8 +1,15 @@
-import { usePuzzleStore } from '../store/usePuzzleStore';
-import { GRID_SIZE, INITIAL_GRID } from '../constants/puzzle';
+import { memo } from 'react';
+import { useAllStates, useTotalSteps, useGridSize, useInitialGrid } from '@/features/puzzle/store/puzzleSelectors';
 
-function MiniGrid({ grid, label, labelColor, borderColor }: {
+const MiniGrid = memo(function MiniGrid({
+  grid,
+  gridSize,
+  label,
+  labelColor,
+  borderColor,
+}: {
   grid: number[][];
+  gridSize: number;
   label: string;
   labelColor: string;
   borderColor: string;
@@ -12,10 +19,7 @@ function MiniGrid({ grid, label, labelColor, borderColor }: {
       <h3 className={`text-xs font-semibold ${labelColor} uppercase tracking-wider mb-2`}>
         {label}
       </h3>
-      <div
-        className="grid gap-1"
-        style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}
-      >
+      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
         {grid.flat().map((val, i) => (
           <div
             key={i}
@@ -35,27 +39,33 @@ function MiniGrid({ grid, label, labelColor, borderColor }: {
       </div>
     </div>
   );
-}
+});
 
-export default function StatesPreview() {
-  const allStates = usePuzzleStore(s => s.allStates);
-  const totalSteps = usePuzzleStore(s => s.totalSteps);
+const StatesPreview = memo(function StatesPreview() {
+  const allStates = useAllStates();
+  const totalSteps = useTotalSteps();
+  const gridSize = useGridSize();
+  const initialGrid = useInitialGrid();
   const finalGrid = allStates[totalSteps];
 
   return (
-    <div className="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
       <MiniGrid
-        grid={INITIAL_GRID}
+        grid={initialGrid}
+        gridSize={gridSize}
         label="Stato Iniziale"
         labelColor="text-gray-500"
         borderColor="border-gray-700/40"
       />
       <MiniGrid
         grid={finalGrid}
+        gridSize={gridSize}
         label="Stato Finale ✓"
         labelColor="text-green-500"
         borderColor="border-green-700/30"
       />
     </div>
   );
-}
+});
+
+export default StatesPreview;

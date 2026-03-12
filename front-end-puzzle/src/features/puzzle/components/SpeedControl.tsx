@@ -1,9 +1,9 @@
-import { usePuzzleStore } from '../store/usePuzzleStore';
-import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '../constants/puzzle';
+import { useSpeed, useSetSpeed } from '@/features/puzzle/store/puzzleSelectors';
+import { MIN_SPEED, MAX_SPEED, SPEED_STEP } from '@/features/puzzle/constants/puzzle';
 
 export default function SpeedControl() {
-  const speed = usePuzzleStore(s => s.speed);
-  const setSpeed = usePuzzleStore(s => s.setSpeed);
+  const speed = useSpeed();
+  const setSpeed = useSetSpeed();
 
   const invertedMax = MIN_SPEED + MAX_SPEED;
 

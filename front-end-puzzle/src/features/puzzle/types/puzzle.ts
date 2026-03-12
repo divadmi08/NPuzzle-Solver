@@ -1,4 +1,12 @@
 export type Grid = number[][];
+export type GridSize = 3 | 4;
+export type ThemeMode = 'dark' | 'light';
+export type ColorPaletteMode =
+  | 'default'
+  | 'protanopia'
+  | 'deuteranopia'
+  | 'tritanopia'
+  | 'achromatopsia';
 
 export type Direction = 'SINISTRA' | 'SOTTO' | 'SOPRA' | 'DESTRA';
 
@@ -8,7 +16,7 @@ export interface DirectionInfo {
 }
 
 export interface PuzzleConfig {
-  gridSize: number;
+  gridSize: GridSize;
   initialGrid: Grid;
   moves: Direction[];
 }

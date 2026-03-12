@@ -1,4 +1,4 @@
-import GameClient from "../../components/Pages/GameClient";
+import GameClient from "@/features/puzzle/components/GameClient";
 
 export default function Page() {
   return <GameClient />;

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { usePuzzleStore } from '../store/usePuzzleStore';
-import { MOVES, DIRECTION_LABELS } from '../constants/puzzle';
+import { useStep, useJumpToStep, useSolutionMoves } from '@/features/puzzle/store/puzzleSelectors';
+import { DIRECTION_LABELS } from '@/features/puzzle/constants/puzzle';
 
 export default function MoveList() {
-  const step = usePuzzleStore(s => s.step);
-  const jumpToStep = usePuzzleStore(s => s.jumpToStep);
+  const step = useStep();
+  const jumpToStep = useJumpToStep();
+  const moves = useSolutionMoves();
   const listRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll alla mossa attiva
@@ -20,12 +21,12 @@ export default function MoveList() {
   }, [step]);
 
   return (
-    <div className="w-full max-w-2xl bg-gray-800/50 rounded-xl border border-gray-700/50 p-3 sm:p-4">
+    <div className="w-full bg-gray-800/50 rounded-xl border border-gray-700/50 p-3 sm:p-4">
       <h2 className="text-xs sm:text-sm font-semibold text-gray-400 mb-2 sm:mb-3 uppercase tracking-wider">
-        Sequenza Mosse ({MOVES.length})
+        Sequenza Mosse ({moves.length})
       </h2>
-      <div ref={listRef} className="flex flex-wrap gap-1 sm:gap-1.5">
-        {MOVES.map((move, i) => {
+      <div ref={listRef} className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1 sm:gap-1.5">
+        {moves.map((move, i) => {
           const moveIndex = i + 1;
           const isActive = moveIndex === step;
           const isPast = moveIndex < step;

@@ -3,6 +3,7 @@ import Link from "next/link";
 export default function Home() {
   const pages = [
     { href: "/game", label: "Gioca" },
+    { href: "/custom", label: "Tabella Manuale" },
     { href: "/settings", label: "Impostazioni" },
   ];
 

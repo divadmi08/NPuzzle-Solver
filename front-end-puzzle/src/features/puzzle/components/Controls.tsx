@@ -1,25 +1,31 @@
-import { usePuzzleStore } from '../store/usePuzzleStore';
+import { useStep, useTotalSteps, useIsPlaying, useGoPrev, useGoNext, useTogglePlay, usePause, useGameMode, useRestartGame } from '@/features/puzzle/store/puzzleSelectors';
 
 export default function Controls() {
-  const step = usePuzzleStore(s => s.step);
-  const totalSteps = usePuzzleStore(s => s.totalSteps);
-  const isPlaying = usePuzzleStore(s => s.isPlaying);
-  const reset = usePuzzleStore(s => s.reset);
-  const goPrev = usePuzzleStore(s => s.goPrev);
-  const goNext = usePuzzleStore(s => s.goNext);
-  const togglePlay = usePuzzleStore(s => s.togglePlay);
-  const pause = usePuzzleStore(s => s.pause);
+  const gameMode = useGameMode();
+  const step = useStep();
+  const totalSteps = useTotalSteps();
+  const isPlaying = useIsPlaying();
+  const goPrev = useGoPrev();
+  const goNext = useGoNext();
+  const togglePlay = useTogglePlay();
+  const pause = usePause();
+  const restartGame = useRestartGame();
 
   const handlePrev = () => { pause(); goPrev(); };
   const handleNext = () => { pause(); goNext(); };
 
+  if (gameMode === 'play') {
+    return null;
+  }
+
+  // gameMode === 'replay'
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
       <button
-        onClick={reset}
+        onClick={restartGame}
         className="px-3 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-xs sm:text-sm font-medium transition-colors border border-gray-600 active:scale-95"
       >
-        ⟲ Reset
+        ⟲ Riprova
       </button>
       <button
         onClick={handlePrev}

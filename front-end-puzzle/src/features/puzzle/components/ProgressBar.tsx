@@ -1,8 +1,8 @@
-import { usePuzzleStore } from '../store/usePuzzleStore';
+import { useStep, useTotalSteps } from '@/features/puzzle/store/puzzleSelectors';
 
 export default function ProgressBar() {
-  const step = usePuzzleStore(s => s.step);
-  const totalSteps = usePuzzleStore(s => s.totalSteps);
+  const step = useStep();
+  const totalSteps = useTotalSteps();
   const percentage = totalSteps > 0 ? (step / totalSteps) * 100 : 0;
 
   return (
