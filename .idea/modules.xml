@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/NPuzzle-Solver.iml" filepath="$PROJECT_DIR$/.idea/NPuzzle-Solver.iml" />
-      <module fileurl="file://$PROJECT_DIR$/npuzzle-engine/npuzzle-engine.iml" filepath="$PROJECT_DIR$/npuzzle-engine/npuzzle-engine.iml" />
     </modules>
   </component>
 </project>
