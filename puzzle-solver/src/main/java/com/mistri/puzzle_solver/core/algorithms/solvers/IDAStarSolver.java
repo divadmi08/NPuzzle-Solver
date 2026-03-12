@@ -1,9 +1,9 @@
-package com.mistri.puzzle_solver.puzzle.algorithms.solvers;
+package com.mistri.puzzle_solver.core.algorithms.solvers;
 
-import com.mistri.puzzle_solver.puzzle.algorithms.Solver;
-import com.mistri.puzzle_solver.puzzle.algorithms.Heuristic;
-import com.mistri.puzzle_solver.puzzle.model.Move;
-import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
+import com.mistri.puzzle_solver.core.algorithms.Solver;
+import com.mistri.puzzle_solver.core.algorithms.Heuristic;
+import com.mistri.puzzle_solver.core.model.Move;
+import com.mistri.puzzle_solver.core.model.PuzzleState;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.mistri.puzzle_solver.puzzle.PDB.runtime;
+package com.mistri.puzzle_solver.PDB.runtime;
 
 import java.util.Arrays;
 

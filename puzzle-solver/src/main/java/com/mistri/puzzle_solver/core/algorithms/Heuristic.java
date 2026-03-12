@@ -1,8 +1,8 @@
-package com.mistri.puzzle_solver.puzzle.algorithms;
+package com.mistri.puzzle_solver.core.algorithms;
 
-import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
+import com.mistri.puzzle_solver.core.model.PuzzleState;
 import org.springframework.stereotype.Component;
-import com.mistri.puzzle_solver.puzzle.PDB.runtime.PDBLoader;
+import com.mistri.puzzle_solver.PDB.runtime.PDBLoader;
 
 import java.util.Set;
 

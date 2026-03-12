@@ -1,7 +1,7 @@
-package com.mistri.puzzle_solver.puzzle;
+package com.mistri.puzzle_solver.generator;
 
-import com.mistri.puzzle_solver.puzzle.model.Move;
-import com.mistri.puzzle_solver.puzzle.model.PuzzleState;
+import com.mistri.puzzle_solver.core.model.Move;
+import com.mistri.puzzle_solver.core.model.PuzzleState;
 
 import java.util.Random;
 

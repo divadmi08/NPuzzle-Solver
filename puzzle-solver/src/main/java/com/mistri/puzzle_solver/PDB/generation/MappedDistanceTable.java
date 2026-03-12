@@ -1,4 +1,4 @@
-package com.mistri.puzzle_solver.puzzle.PDB.generation;
+package com.mistri.puzzle_solver.PDB.generation;
 
 import java.io.IOException;
 import java.nio.MappedByteBuffer;

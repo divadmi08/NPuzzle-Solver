@@ -1,4 +1,4 @@
-package com.mistri.puzzle_solver.puzzle.model;
+package com.mistri.puzzle_solver.core.model;
 
 public class Node implements Comparable<Node> {
 

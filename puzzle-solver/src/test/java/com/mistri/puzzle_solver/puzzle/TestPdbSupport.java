@@ -1,7 +1,7 @@
 package com.mistri.puzzle_solver.puzzle;
 
-import com.mistri.puzzle_solver.puzzle.PDB.runtime.PDBLoader;
-import com.mistri.puzzle_solver.puzzle.algorithms.Heuristic;
+import com.mistri.puzzle_solver.PDB.runtime.PDBLoader;
+import com.mistri.puzzle_solver.core.algorithms.Heuristic;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

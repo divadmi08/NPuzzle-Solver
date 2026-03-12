@@ -1,6 +1,6 @@
-package com.mistri.puzzle_solver.puzzle.PDB.generation;
+package com.mistri.puzzle_solver.PDB.generation;
 
-import com.mistri.puzzle_solver.puzzle.PDB.runtime.PatternIndexer;
+import com.mistri.puzzle_solver.PDB.runtime.PatternIndexer;
 
 import java.io.IOException;
 import java.nio.file.Files;
