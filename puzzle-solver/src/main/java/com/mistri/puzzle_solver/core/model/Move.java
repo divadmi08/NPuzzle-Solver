@@ -2,25 +2,25 @@ package com.mistri.puzzle_solver.core.model;
 
 public enum Move {
 
-    SOPRA(-1,0),
-    SOTTO(1,0),
-    SINISTRA(0,-1),
-    DESTRA(0,1);
+    SOPRA(-1, 0),
+    SOTTO(1, 0),
+    SINISTRA(0, -1),
+    DESTRA(0, 1);
 
-    public final int movimentoY;
-    public final int movimentoX;
+    public final int deltaRiga;
+    public final int deltaColonna;
 
-    Move(int y, int x){
-        this.movimentoY = y;
-        this.movimentoX = x;
+    Move(int deltaRiga, int deltaColonna) {
+        this.deltaRiga = deltaRiga;
+        this.deltaColonna = deltaColonna;
     }
 
-    public int getMovimentoY() {
-        return movimentoY;
+    public int getDeltaRiga() {
+        return deltaRiga;
     }
 
-    public int getMovimentoX() {
-        return movimentoX;
+    public int getDeltaColonna() {
+        return deltaColonna;
     }
 
     public boolean isOpposite(Move other) {

@@ -16,42 +16,42 @@ final class MappedPatternDatabase implements PatternEstimator {
     private final List<MappedByteBuffer> segmenti;
     private final String descrizione;
 
-    MappedPatternDatabase(List<Path> paths, int... tiles) throws IOException {
-        this.indicizzatore = new PatternIndexer(tiles);
-        this.descrizione = "mapped " + indicizzatore.description();
+    MappedPatternDatabase(List<Path> percorsi, int... tessere) throws IOException {
+        this.indicizzatore = new PatternIndexer(tessere);
+        this.descrizione = "mapped " + indicizzatore.descrizione();
 
-        long dimensioneAttesa = indicizzatore.stateCount();
+        long dimensioneAttesa = indicizzatore.contaStati();
         long dimensioneTotale = 0;
         List<MappedByteBuffer> mappati = new ArrayList<>();
-        for (Path path : paths) {
-            try (FileChannel channel = FileChannel.open(path, StandardOpenOption.READ)) {
-                dimensioneTotale += channel.size();
-                mappati.add(channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()));
+        for (Path percorso : percorsi) {
+            try (FileChannel canale = FileChannel.open(percorso, StandardOpenOption.READ)) {
+                dimensioneTotale += canale.size();
+                mappati.add(canale.map(FileChannel.MapMode.READ_ONLY, 0, canale.size()));
             }
         }
 
         if (dimensioneTotale != dimensioneAttesa) {
-            throw new IOException("Unexpected segmented PDB size for pattern " + indicizzatore.description()
+            throw new IOException("Unexpected segmented PDB size for pattern " + indicizzatore.descrizione()
                     + ": expected " + dimensioneAttesa + " bytes, found " + dimensioneTotale);
         }
         this.segmenti = List.copyOf(mappati);
     }
 
     @Override
-    public int estimate(int[] board) {
-        long rank = indicizzatore.rankBoard(board);
-        int indiceSegmento = (int) (rank / SEGMENT_SIZE);
-        int offset = (int) (rank % SEGMENT_SIZE);
-        return segmenti.get(indiceSegmento).get(offset) & 0xFF;
+    public int stima(int[] tessere) {
+        long rango = indicizzatore.calcolaRangoGriglia(tessere);
+        int indiceSegmento = (int) (rango / SEGMENT_SIZE);
+        int scostamento = (int) (rango % SEGMENT_SIZE);
+        return segmenti.get(indiceSegmento).get(scostamento) & 0xFF;
     }
 
     @Override
-    public long stateCount() {
-        return indicizzatore.stateCount();
+    public long contaStati() {
+        return indicizzatore.contaStati();
     }
 
     @Override
-    public String description() {
+    public String descrizione() {
         return descrizione;
     }
 }

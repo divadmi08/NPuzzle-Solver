@@ -2,42 +2,42 @@ package com.mistri.puzzle_solver.core.model;
 
 public class Node implements Comparable<Node> {
 
-    private final PuzzleState puzzleState;
+    private final PuzzleState statoPuzzle;
     private final Node nodoPadre;
     private final Move mossaPrecedente;
 
-    private final int g;
-    private final int h;
-    private final int f;
+    private final int costoG;
+    private final int costoH;
+    private final int costoF;
 
-    public Node(PuzzleState puzzleState, Node nodoPadre, Move mossaPrecedente, int h) {
-        this.puzzleState = puzzleState;
+    public Node(PuzzleState statoPuzzle, Node nodoPadre, Move mossaPrecedente, int costoH) {
+        this.statoPuzzle = statoPuzzle;
         this.nodoPadre = nodoPadre;
         this.mossaPrecedente = mossaPrecedente;
-        this.g = (nodoPadre == null) ? 0 : nodoPadre.g + 1;
-        this.h = h;
-        this.f = g + h;
+        this.costoG = (nodoPadre == null) ? 0 : nodoPadre.costoG + 1;
+        this.costoH = costoH;
+        this.costoF = costoG + costoH;
     }
 
-    public Node(PuzzleState puzzleState, int h) {
-        this(puzzleState, null, null, h);
+    public Node(PuzzleState statoPuzzle, int costoH) {
+        this(statoPuzzle, null, null, costoH);
     }
 
     @Override
     public int compareTo(Node altro) {
-        int diff = Integer.compare(this.f, altro.f);
-        if (diff != 0) return diff;
-        return Integer.compare(this.h, altro.h);
+        int differenza = Integer.compare(this.costoF, altro.costoF);
+        if (differenza != 0) return differenza;
+        return Integer.compare(this.costoH, altro.costoH);
     }
 
-    public int getG() {
-        return g;
+    public int getCostoG() {
+        return costoG;
     }
-    public int getH() {
-        return h;
+    public int getCostoH() {
+        return costoH;
     }
-    public int getF() {
-        return f;
+    public int getCostoF() {
+        return costoF;
     }
     public Node getNodoPadre() {
         return nodoPadre;
@@ -45,7 +45,7 @@ public class Node implements Comparable<Node> {
     public Move getMossaPrecedente() {
         return mossaPrecedente;
     }
-    public PuzzleState getPuzzleState() {
-        return puzzleState;
+    public PuzzleState getStatoPuzzle() {
+        return statoPuzzle;
     }
 }

@@ -4,97 +4,95 @@ import com.mistri.puzzle_solver.core.model.PuzzleState;
 import org.springframework.stereotype.Component;
 import com.mistri.puzzle_solver.PDB.runtime.PDBLoader;
 
-import java.util.Set;
-
 @Component
 public class Heuristic {
 
-    private final PDBLoader loader;
+    private final PDBLoader caricatorePdb;
 
-    public Heuristic(PDBLoader loader) {
-        this.loader = loader;
+    public Heuristic(PDBLoader caricatorePdb) {
+        this.caricatorePdb = caricatorePdb;
     }
 
-    public int heuristic(PuzzleState state, Set<Integer> patternSet) {
-        return heuristic(state.getTilesUnsafe(), state.getGrandezza(), patternSet);
+    public int stima(PuzzleState stato) {
+        return stima(stato.getTessereSenzaCopia(), stato.getDimensione());
     }
 
-    public int heuristic(int[] tiles, int size, Set<Integer> patternSet) {
-        int manhattan = manhattan(tiles, size);
-        int linearConflict = linearConflict(tiles, size);
-        int pdbValue = lookupPDB(tiles, size, patternSet);
-        return Math.max(manhattan + linearConflict, pdbValue);
+    public int stima(int[] tessere, int dimensione) {
+        int distanzaManhattan = distanzaManhattan(tessere, dimensione);
+        int conflittoLineare = conflittoLineare(tessere, dimensione);
+        int valorePdb = stimaPdb(tessere, dimensione);
+        return Math.max(distanzaManhattan + conflittoLineare, valorePdb);
     }
 
-    private int manhattan(int[] tiles, int size) {
+    private int distanzaManhattan(int[] tessere, int dimensione) {
         int distanza = 0;
-        for (int index = 0; index < size * size; index++) {
-            int value = tiles[index];
-            if (value == 0) {
+        for (int indice = 0; indice < dimensione * dimensione; indice++) {
+            int valore = tessere[indice];
+            if (valore == 0) {
                 continue;
             }
-            int row = index / size;
-            int col = index % size;
-            int targetRow = (value - 1) / size;
-            int targetCol = (value - 1) % size;
-            distanza += Math.abs(row - targetRow) + Math.abs(col - targetCol);
+            int riga = indice / dimensione;
+            int colonna = indice % dimensione;
+            int rigaObiettivo = (valore - 1) / dimensione;
+            int colonnaObiettivo = (valore - 1) % dimensione;
+            distanza += Math.abs(riga - rigaObiettivo) + Math.abs(colonna - colonnaObiettivo);
         }
         return distanza;
     }
 
-    private int linearConflict(int[] tiles, int size) {
-        int conflicts = 0;
+    private int conflittoLineare(int[] tessere, int dimensione) {
+        int conflitti = 0;
 
-        for (int row = 0; row < size; row++) {
-            for (int colA = 0; colA < size; colA++) {
-                int tileA = tiles[row * size + colA];
-                if (tileA == 0 || targetRow(tileA, size) != row) {
+        for (int riga = 0; riga < dimensione; riga++) {
+            for (int colonnaA = 0; colonnaA < dimensione; colonnaA++) {
+                int tesseraA = tessere[riga * dimensione + colonnaA];
+                if (tesseraA == 0 || rigaObiettivo(tesseraA, dimensione) != riga) {
                     continue;
                 }
-                int targetColA = targetCol(tileA, size);
-                for (int colB = colA + 1; colB < size; colB++) {
-                    int tileB = tiles[row * size + colB];
-                    if (tileB == 0 || targetRow(tileB, size) != row) {
+                int colonnaObiettivoA = colonnaObiettivo(tesseraA, dimensione);
+                for (int colonnaB = colonnaA + 1; colonnaB < dimensione; colonnaB++) {
+                    int tesseraB = tessere[riga * dimensione + colonnaB];
+                    if (tesseraB == 0 || rigaObiettivo(tesseraB, dimensione) != riga) {
                         continue;
                     }
-                    if (targetColA > targetCol(tileB, size)) {
-                        conflicts++;
+                    if (colonnaObiettivoA > colonnaObiettivo(tesseraB, dimensione)) {
+                        conflitti++;
                     }
                 }
             }
         }
 
-        for (int col = 0; col < size; col++) {
-            for (int rowA = 0; rowA < size; rowA++) {
-                int tileA = tiles[rowA * size + col];
-                if (tileA == 0 || targetCol(tileA, size) != col) {
+        for (int colonna = 0; colonna < dimensione; colonna++) {
+            for (int rigaA = 0; rigaA < dimensione; rigaA++) {
+                int tesseraA = tessere[rigaA * dimensione + colonna];
+                if (tesseraA == 0 || colonnaObiettivo(tesseraA, dimensione) != colonna) {
                     continue;
                 }
-                int targetRowA = targetRow(tileA, size);
-                for (int rowB = rowA + 1; rowB < size; rowB++) {
-                    int tileB = tiles[rowB * size + col];
-                    if (tileB == 0 || targetCol(tileB, size) != col) {
+                int rigaObiettivoA = rigaObiettivo(tesseraA, dimensione);
+                for (int rigaB = rigaA + 1; rigaB < dimensione; rigaB++) {
+                    int tesseraB = tessere[rigaB * dimensione + colonna];
+                    if (tesseraB == 0 || colonnaObiettivo(tesseraB, dimensione) != colonna) {
                         continue;
                     }
-                    if (targetRowA > targetRow(tileB, size)) {
-                        conflicts++;
+                    if (rigaObiettivoA > rigaObiettivo(tesseraB, dimensione)) {
+                        conflitti++;
                     }
                 }
             }
         }
 
-        return conflicts * 2;
+        return conflitti * 2;
     }
 
-    private int targetRow(int tile, int size) {
-        return (tile - 1) / size;
+    private int rigaObiettivo(int tessera, int dimensione) {
+        return (tessera - 1) / dimensione;
     }
 
-    private int targetCol(int tile, int size) {
-        return (tile - 1) % size;
+    private int colonnaObiettivo(int tessera, int dimensione) {
+        return (tessera - 1) % dimensione;
     }
 
-    private int lookupPDB(int[] tiles, int size, Set<Integer> patternSet) {
-        return loader.estimate(tiles, size, patternSet);
+    private int stimaPdb(int[] tessere, int dimensione) {
+        return caricatorePdb.stima(tessere, dimensione);
     }
 }

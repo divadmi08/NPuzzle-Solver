@@ -7,39 +7,39 @@ import java.util.Random;
 
 public class PuzzleGenerator {
 
-    private static final Random random = new Random();
+    private static final Random casuale = new Random();
 
     //numMosse 50 per 3x3, 200 per 4x4
-    public static PuzzleState generaPuzzle(int size, int numMosse) {
-        int[][] goal = new int[size][size];
-        int val = 1;
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                if (y == size - 1 && x == size - 1)
-                    goal[y][x] = 0;
+    public static PuzzleState generaPuzzle(int dimensione, int numeroMosse) {
+        int[][] grigliaObiettivo = new int[dimensione][dimensione];
+        int valore = 1;
+        for (int riga = 0; riga < dimensione; riga++) {
+            for (int colonna = 0; colonna < dimensione; colonna++) {
+                if (riga == dimensione - 1 && colonna == dimensione - 1)
+                    grigliaObiettivo[riga][colonna] = 0;
                 else
-                    goal[y][x] = val++;
+                    grigliaObiettivo[riga][colonna] = valore++;
             }
         }
 
-        PuzzleState puzzle = new PuzzleState(goal);
+        PuzzleState statoPuzzle = new PuzzleState(grigliaObiettivo);
         Move ultimaMossa = null;
 
-        for (int i = 0; i < numMosse; i++) {
+        for (int i = 0; i < numeroMosse; i++) {
             Move[] mossePossibili = Move.values();
-            PuzzleState nuovo = null;
+            PuzzleState statoNuovo = null;
             Move mossa;
             do {
-                mossa = mossePossibili[random.nextInt(mossePossibili.length)];
+                mossa = mossePossibili[casuale.nextInt(mossePossibili.length)];
                 if (ultimaMossa == null || !mossa.isOpposite(ultimaMossa)) {
-                    nuovo = puzzle.applicaMossa(mossa);
+                    statoNuovo = statoPuzzle.applicaMossa(mossa);
                 }
-            } while (nuovo == null);
+            } while (statoNuovo == null);
 
-            puzzle = nuovo;
+            statoPuzzle = statoNuovo;
             ultimaMossa = mossa;
         }
 
-        return puzzle;
+        return statoPuzzle;
     }
 }

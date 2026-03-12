@@ -11,79 +11,79 @@ import java.util.List;
 
 final class MappedDistanceTable implements AutoCloseable {
 
-    private static final int DEFAULT_SEGMENT_SIZE_MB = 1024;
+    private static final int DIMENSIONE_SEGMENTO_PREDEFINITA_MB = 1024;
 
     private final long dimensioneSegmento;
     private final List<FileChannel> canali;
-    private final List<MappedByteBuffer> buffer;
+    private final List<MappedByteBuffer> bufferMappati;
     private final List<Path> percorsiSegmenti;
 
     private MappedDistanceTable(long dimensioneSegmento, List<FileChannel> canali,
-                                List<MappedByteBuffer> buffer, List<Path> percorsiSegmenti) {
+                                List<MappedByteBuffer> bufferMappati, List<Path> percorsiSegmenti) {
         this.dimensioneSegmento = dimensioneSegmento;
         this.canali = canali;
-        this.buffer = buffer;
+        this.bufferMappati = bufferMappati;
         this.percorsiSegmenti = percorsiSegmenti;
     }
 
-    static MappedDistanceTable create(Path directory, String prefix, long stateCount) throws IOException {
-        return create(directory, prefix, stateCount, DEFAULT_SEGMENT_SIZE_MB);
+    static MappedDistanceTable crea(Path cartella, String prefisso, long numeroStati) throws IOException {
+        return crea(cartella, prefisso, numeroStati, DIMENSIONE_SEGMENTO_PREDEFINITA_MB);
     }
 
-    static MappedDistanceTable create(Path directory, String prefix, long stateCount, int segmentSizeMb) throws IOException {
-        Files.createDirectories(directory);
+    static MappedDistanceTable crea(Path cartella, String prefisso, long numeroStati, int dimensioneSegmentoMb) throws IOException {
+        Files.createDirectories(cartella);
 
-        long dimensioneSegmento = segmentSizeMb * 1024L * 1024L;
-        int numeroSegmenti = (int) ((stateCount + dimensioneSegmento - 1) / dimensioneSegmento);
+        long dimensioneSegmento = dimensioneSegmentoMb * 1024L * 1024L;
+        int numeroSegmenti = (int) ((numeroStati + dimensioneSegmento - 1) / dimensioneSegmento);
 
         List<FileChannel> canali = new ArrayList<>(numeroSegmenti);
-        List<MappedByteBuffer> buffer = new ArrayList<>(numeroSegmenti);
+        List<MappedByteBuffer> bufferMappati = new ArrayList<>(numeroSegmenti);
         List<Path> percorsi = new ArrayList<>(numeroSegmenti);
 
         for (int i = 0; i < numeroSegmenti; i++) {
-            long rimanenti = stateCount - (long) i * dimensioneSegmento;
+            long rimanenti = numeroStati - (long) i * dimensioneSegmento;
             long dimensioneCorrente = Math.min(dimensioneSegmento, rimanenti);
-            Path path = directory.resolve(prefix + "." + i + ".bin");
-            try (FileChannel initChannel = FileChannel.open(
-                    path,
+            Path percorso = cartella.resolve(prefisso + "." + i + ".bin");
+            try (FileChannel canaleIniziale = FileChannel.open(
+                    percorso,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE)) {
-                writeFilled(initChannel, dimensioneCorrente, (byte) 0xFF);
+                scriviRiempito(canaleIniziale, dimensioneCorrente, (byte) 0xFF);
             }
 
-            FileChannel channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
-            MappedByteBuffer bufferMappato = channel.map(FileChannel.MapMode.READ_WRITE, 0, dimensioneCorrente);
-            canali.add(channel);
-            buffer.add(bufferMappato);
-            percorsi.add(path);
+            FileChannel canale = FileChannel.open(percorso, StandardOpenOption.READ, StandardOpenOption.WRITE);
+            MappedByteBuffer bufferMappato = canale.map(FileChannel.MapMode.READ_WRITE, 0, dimensioneCorrente);
+            canali.add(canale);
+            bufferMappati.add(bufferMappato);
+            percorsi.add(percorso);
         }
 
-        return new MappedDistanceTable(dimensioneSegmento, canali, buffer, percorsi);
+        return new MappedDistanceTable(dimensioneSegmento, canali, bufferMappati, percorsi);
     }
 
-    byte get(long index) {
-        int indiceSegmento = (int) (index / dimensioneSegmento);
-        int offset = (int) (index % dimensioneSegmento);
-        return buffer.get(indiceSegmento).get(offset);
+    byte leggi(long indice) {
+        int indiceSegmento = (int) (indice / dimensioneSegmento);
+        int scostamento = (int) (indice % dimensioneSegmento);
+        return bufferMappati.get(indiceSegmento).get(scostamento);
     }
 
-    void set(long index, byte value) {
-        int indiceSegmento = (int) (index / dimensioneSegmento);
-        int offset = (int) (index % dimensioneSegmento);
-        buffer.get(indiceSegmento).put(offset, value);
+    void scrivi(long indice, byte valore) {
+        int indiceSegmento = (int) (indice / dimensioneSegmento);
+        int scostamento = (int) (indice % dimensioneSegmento);
+        bufferMappati.get(indiceSegmento).put(scostamento, valore);
     }
 
-    List<Path> segmentPaths() {
+    List<Path> percorsiSegmenti() {
         return List.copyOf(percorsiSegmenti);
     }
 
     @Override
     public void close() throws IOException {
         IOException failure = null;
-        for (FileChannel channel : canali) {
+        for (FileChannel canale : canali) {
             try {
-                channel.close();
+                canale.close();
             } catch (IOException e) {
                 if (failure == null) {
                     failure = e;
@@ -95,19 +95,19 @@ final class MappedDistanceTable implements AutoCloseable {
         }
     }
 
-    private static void writeFilled(FileChannel channel, long size, byte value) throws IOException {
+    private static void scriviRiempito(FileChannel canale, long dimensione, byte valore) throws IOException {
         byte[] blocco = new byte[1 << 20];
-        if (value != 0) {
+        if (valore != 0) {
             for (int i = 0; i < blocco.length; i++) {
-                blocco[i] = value;
+                blocco[i] = valore;
             }
         }
 
         long scritti = 0;
-        while (scritti < size) {
-            int length = (int) Math.min(blocco.length, size - scritti);
-            channel.write(java.nio.ByteBuffer.wrap(blocco, 0, length));
-            scritti += length;
+        while (scritti < dimensione) {
+            int lunghezza = (int) Math.min(blocco.length, dimensione - scritti);
+            canale.write(java.nio.ByteBuffer.wrap(blocco, 0, lunghezza));
+            scritti += lunghezza;
         }
     }
 }

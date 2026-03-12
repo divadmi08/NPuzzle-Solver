@@ -8,7 +8,6 @@ import com.mistri.puzzle_solver.core.model.PuzzleState;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,133 +16,133 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SolverRegressionTests {
 
-    private static final Heuristic heuristic = TestPdbSupport.HEURISTIC;
-    private final AStarSolver aStarSolver = new AStarSolver(heuristic);
-    private final IDAStarSolver idaStarSolver = new IDAStarSolver(heuristic);
+    private static final Heuristic euristica = TestPdbSupport.EURISTICA;
+    private final AStarSolver risolutoreAStar = new AStarSolver(euristica);
+    private final IDAStarSolver risolutoreIdaStar = new IDAStarSolver(euristica);
 
     @Test
-    void aStarSolvesSimple3x3PuzzleOptimally() {
-        PuzzleState start = new PuzzleState(new int[][]{
+    void aStarRisolvePuzzle3x3SempliceInModoOttimale() {
+        PuzzleState statoIniziale = new PuzzleState(new int[][]{
                 {1, 2, 3},
                 {4, 5, 6},
                 {7, 0, 8}
         });
 
-        List<Move> solution = aStarSolver.solve(start, Set.of());
-        PuzzleState endState = applyMoves(start, solution);
+        List<Move> soluzione = risolutoreAStar.risolvi(statoIniziale);
+        PuzzleState statoFinale = applicaMosse(statoIniziale, soluzione);
 
-        printSolution("A*", start, solution, endState);
+        stampaSoluzione("A*", statoIniziale, soluzione, statoFinale);
 
-        assertNotNull(solution);
-        assertEquals(1, solution.size());
-        assertTrue(endState.isGoal());
+        assertNotNull(soluzione);
+        assertEquals(1, soluzione.size());
+        assertTrue(statoFinale.isGoal());
     }
 
     @Test
-    void idaStarSolvesSimple4x4Puzzle() {
-        PuzzleState start = new PuzzleState(new int[][]{
+    void idaStarRisolvePuzzle4x4Semplice() {
+        PuzzleState statoIniziale = new PuzzleState(new int[][]{
                 {1, 2, 3, 4},
                 {5, 6, 7, 8},
                 {9, 10, 11, 12},
                 {13, 14, 0, 15}
         });
 
-        List<Move> solution = idaStarSolver.solve(start, Set.of());
-        PuzzleState endState = applyMoves(start, solution);
+        List<Move> soluzione = risolutoreIdaStar.risolvi(statoIniziale);
+        PuzzleState statoFinale = applicaMosse(statoIniziale, soluzione);
 
-        printSolution("IDA*", start, solution, endState);
+        stampaSoluzione("IDA*", statoIniziale, soluzione, statoFinale);
 
-        assertNotNull(solution);
-        assertEquals(1, solution.size());
-        assertTrue(endState.isGoal());
+        assertNotNull(soluzione);
+        assertEquals(1, soluzione.size());
+        assertTrue(statoFinale.isGoal());
     }
 
     @Test
-    void aStarSolvesHarder3x3Puzzle() {
-        PuzzleState start = new PuzzleState(new int[][]{
+    void aStarRisolvePuzzle3x3PiuDifficile() {
+        PuzzleState statoIniziale = new PuzzleState(new int[][]{
                 {1, 3, 6},
                 {5, 0, 2},
                 {4, 7, 8}
         });
 
-        List<Move> solution = aStarSolver.solve(start, Set.of());
-        PuzzleState endState = applyMoves(start, solution);
+        List<Move> soluzione = risolutoreAStar.risolvi(statoIniziale);
+        PuzzleState statoFinale = applicaMosse(statoIniziale, soluzione);
 
-        printSolution("A* harder", start, solution, endState);
+        stampaSoluzione("A* harder", statoIniziale, soluzione, statoFinale);
 
-        assertNotNull(solution);
-        assertEquals(8, solution.size());
-        assertTrue(endState.isGoal());
+        assertNotNull(soluzione);
+        assertEquals(8, soluzione.size());
+        assertTrue(statoFinale.isGoal());
     }
 
     @Test
-    void idaStarSolvesHarder4x4Puzzle() {
-        PuzzleState start = new PuzzleState(new int[][]{
+    void idaStarRisolvePuzzle4x4PiuDifficile() {
+        PuzzleState statoIniziale = new PuzzleState(new int[][]{
                 {1, 2, 3, 4},
                 {5, 6, 8, 12},
                 {9, 10, 7, 15},
                 {13, 14, 11, 0}
         });
 
-        List<Move> solution = idaStarSolver.solve(start, Set.of());
-        PuzzleState endState = applyMoves(start, solution);
+        List<Move> soluzione = risolutoreIdaStar.risolvi(statoIniziale);
+        PuzzleState statoFinale = applicaMosse(statoIniziale, soluzione);
 
-        printSolution("IDA* harder", start, solution, endState);
+        stampaSoluzione("IDA* harder", statoIniziale, soluzione, statoFinale);
 
-        assertNotNull(solution);
-        assertEquals(6, solution.size());
-        assertTrue(endState.isGoal());
+        assertNotNull(soluzione);
+        assertEquals(6, soluzione.size());
+        assertTrue(statoFinale.isGoal());
     }
 
     @Test
-    void linearConflictImprovesHeuristicWhenTilesAreReversed() {
-        PuzzleState state = new PuzzleState(new int[][]{
+    void conflittoLineareMiglioraEuristicaConTessereInvertite() {
+        PuzzleState stato = new PuzzleState(new int[][]{
                 {2, 1, 3},
                 {4, 5, 6},
                 {7, 8, 0}
         });
 
-        assertEquals(4, heuristic.heuristic(state, Set.of()));
+        assertEquals(4, euristica.stima(stato));
     }
 
     @Test
-    void unsolvable3x3IsRejectedBeforeSearch() {
-        PuzzleState start = new PuzzleState(new int[][]{
+    void puzzle3x3IrresolubileVieneRifiutatoPrimaDellaRicerca() {
+        PuzzleState statoIniziale = new PuzzleState(new int[][]{
                 {1, 2, 3},
                 {4, 5, 6},
                 {8, 7, 0}
         });
 
-        assertNull(aStarSolver.solve(start, Set.of()));
+        assertNull(risolutoreAStar.risolvi(statoIniziale));
     }
 
     @Test
-    void unsolvable4x4IsRejectedBeforeSearch() {
-        PuzzleState start = new PuzzleState(new int[][]{
+    void puzzle4x4IrresolubileVieneRifiutatoPrimaDellaRicerca() {
+        PuzzleState statoIniziale = new PuzzleState(new int[][]{
                 {1, 2, 3, 4},
                 {5, 6, 7, 8},
                 {9, 10, 11, 12},
                 {13, 15, 14, 0}
         });
 
-        assertNull(idaStarSolver.solve(start, Set.of()));
+        assertNull(risolutoreIdaStar.risolvi(statoIniziale));
     }
 
-    private PuzzleState applyMoves(PuzzleState state, List<Move> moves) {
-        PuzzleState current = state;
-        for (Move move : moves) {
-            current = current.applicaMossa(move);
+    private PuzzleState applicaMosse(PuzzleState stato, List<Move> mosse) {
+        PuzzleState corrente = stato;
+        for (Move mossa : mosse) {
+            corrente = corrente.applicaMossa(mossa);
         }
-        return current;
+        return corrente;
     }
 
-    private void printSolution(String solverName, PuzzleState start, List<Move> solution, PuzzleState endState) {
-        System.out.println("==== " + solverName + " ====");
+    private void stampaSoluzione(String nomeRisolutore, PuzzleState statoIniziale, List<Move> soluzione, PuzzleState statoFinale) {
+        System.out.println("==== " + nomeRisolutore + " ====");
         System.out.println("Start:");
-        System.out.println(start);
-        System.out.println("Moves: " + solution);
-        System.out.println("Steps: " + solution.size());
+        System.out.println(statoIniziale);
+        System.out.println("Moves: " + soluzione);
+        System.out.println("Steps: " + soluzione.size());
         System.out.println("End:");
-        System.out.println(endState);
+        System.out.println(statoFinale);
     }
 }

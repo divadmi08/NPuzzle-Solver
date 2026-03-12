@@ -7,64 +7,69 @@ import com.mistri.puzzle_solver.core.model.Node;
 import com.mistri.puzzle_solver.core.model.PuzzleState;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.PriorityQueue;
 
 @Component
 public class AStarSolver implements Solver {
 
-    private final Heuristic heuristic;
+    private final Heuristic euristica;
 
-    public AStarSolver(Heuristic heuristic) {
-        this.heuristic = heuristic;
+    public AStarSolver(Heuristic euristica) {
+        this.euristica = euristica;
     }
 
     @Override
-    public List<Move> solve(PuzzleState start, Set<Integer> patternSet) {
-        if (!start.isSolvable()) {
+    public List<Move> risolvi(PuzzleState statoIniziale) {
+        if (!statoIniziale.isSolvable()) {
             return null;
         }
 
-        PriorityQueue<Node> open = new PriorityQueue<>();
-        HashSet<PuzzleState> closed = new HashSet<>();
-        HashMap<PuzzleState, Integer> bestG = new HashMap<>();
+        PriorityQueue<Node> aperti = new PriorityQueue<>();
+        HashSet<PuzzleState> chiusi = new HashSet<>();
+        HashMap<PuzzleState, Integer> migliorG = new HashMap<>();
 
-        Node startNode = new Node(start, heuristic.heuristic(start, patternSet));
-        open.add(startNode);
-        bestG.put(start, 0);
+        Node nodoIniziale = new Node(statoIniziale, euristica.stima(statoIniziale));
+        aperti.add(nodoIniziale);
+        migliorG.put(statoIniziale, 0);
 
-        while (!open.isEmpty()) {
-            Node node = open.poll();
-            if (node.getPuzzleState().isGoal()) return retrivePath(node);
+        while (!aperti.isEmpty()) {
+            Node nodo = aperti.poll();
+            if (nodo.getStatoPuzzle().isGoal()) return ricostruisciPercorso(nodo);
 
-            if (node.getG() > bestG.getOrDefault(node.getPuzzleState(), Integer.MAX_VALUE))
+            if (nodo.getCostoG() > migliorG.getOrDefault(nodo.getStatoPuzzle(), Integer.MAX_VALUE))
                 continue;
 
-            closed.add(node.getPuzzleState());
+            chiusi.add(nodo.getStatoPuzzle());
 
-            for (Move move : Move.values()) {
-                PuzzleState nextState = node.getPuzzleState().applicaMossa(move);
-                if (nextState == null || closed.contains(nextState)) continue;
+            for (Move mossa : Move.values()) {
+                PuzzleState statoSuccessivo = nodo.getStatoPuzzle().applicaMossa(mossa);
+                if (statoSuccessivo == null || chiusi.contains(statoSuccessivo)) continue;
 
-                int g = node.getG() + 1;
-                if (g >= bestG.getOrDefault(nextState, Integer.MAX_VALUE)) continue;
+                int costoG = nodo.getCostoG() + 1;
+                if (costoG >= migliorG.getOrDefault(statoSuccessivo, Integer.MAX_VALUE)) continue;
 
-                bestG.put(nextState, g);
-                int h = heuristic.heuristic(nextState, patternSet);
-                Node nextNode = new Node(nextState, node, move, h);
-                open.add(nextNode);
+                migliorG.put(statoSuccessivo, costoG);
+                int costoH = euristica.stima(statoSuccessivo);
+                Node nodoSuccessivo = new Node(statoSuccessivo, nodo, mossa, costoH);
+                aperti.add(nodoSuccessivo);
             }
         }
 
         return null;
     }
 
-    private List<Move> retrivePath(Node node) {
-        List<Move> moves = new ArrayList<>();
-        while (node.getNodoPadre() != null) {
-            moves.add(node.getMossaPrecedente());
-            node = node.getNodoPadre();
+    private List<Move> ricostruisciPercorso(Node nodo) {
+        List<Move> mosse = new ArrayList<>();
+        while (nodo.getNodoPadre() != null) {
+            mosse.add(nodo.getMossaPrecedente());
+            nodo = nodo.getNodoPadre();
         }
-        Collections.reverse(moves);
-        return moves;
+        Collections.reverse(mosse);
+        return mosse;
     }
 }
