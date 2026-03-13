@@ -7,51 +7,50 @@ import com.mistri.puzzle_solver.core.model.PuzzleState;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SolverBenchmarkTests {
 
-    private static final Heuristic heuristic = TestPdbSupport.HEURISTIC;
-    private final IDAStarSolver idaStarSolver = new IDAStarSolver(heuristic);
+    private static final Heuristic euristica = TestPdbSupport.EURISTICA;
+    private final IDAStarSolver risolutoreIdaStar = new IDAStarSolver(euristica);
 
     @Test
-    void idaStarBenchmarkOnKnownHard4x4Puzzle() {
-        PuzzleState hardest = new PuzzleState(new int[][]{
+    void idaStarBenchmarkSuPuzzle4x4DifficileNoto() {
+        PuzzleState puzzleDifficile = new PuzzleState(new int[][]{
                 {12, 1, 10, 2},
                 {7, 11, 4, 14},
                 {5, 0, 9, 15},
                 {8, 13, 6, 3}
         });
 
-        long start = System.nanoTime();
-        List<Move> solution = idaStarSolver.solve(hardest, Set.of());
-        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+        long inizio = System.nanoTime();
+        List<Move> soluzione = risolutoreIdaStar.risolvi(puzzleDifficile);
+        long msTrascorsi = (System.nanoTime() - inizio) / 1_000_000;
 
-        assertNotNull(solution);
+        assertNotNull(soluzione);
 
-        PuzzleState endState = applyMoves(hardest, solution);
+        PuzzleState statoFinale = applicaMosse(puzzleDifficile, soluzione);
 
         System.out.println("==== IDA* benchmark hardest 4x4 ====");
         System.out.println("Start:");
-        System.out.println(hardest);
-        System.out.println("Steps: " + solution.size());
-        System.out.println("Time ms: " + elapsedMs);
-        System.out.println("Moves: " + solution);
+        System.out.println(puzzleDifficile);
+        System.out.println("Steps: " + soluzione.size());
+        System.out.println("Time ms: " + msTrascorsi);
+        System.out.println("Moves: " + soluzione);
         System.out.println("End:");
-        System.out.println(endState);
+        System.out.println(statoFinale);
 
-        assertTrue(endState.isGoal());
+        assertTrue(statoFinale.isGoal());
     }
 
-    private PuzzleState applyMoves(PuzzleState state, List<Move> moves) {
-        PuzzleState current = state;
-        for (Move move : moves) {
-            current = current.applicaMossa(move);
+    private PuzzleState applicaMosse(PuzzleState stato, List<Move> mosse) {
+        PuzzleState corrente = stato;
+        for (Move mossa : mosse) {
+            corrente = corrente.applicaMossa(mossa);
         }
-        return current;
+        return corrente;
     }
 
     // PDB loader and heuristic are shared via TestPdbSupport.

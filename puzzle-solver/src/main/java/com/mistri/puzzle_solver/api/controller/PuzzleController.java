@@ -19,11 +19,11 @@ public class PuzzleController {
 
     @PostMapping("/generate")
     public PuzzleResponse genera(@RequestBody GenerateRequest richiesta) {
-        return servizioPuzzle.generate(richiesta);
+        return servizioPuzzle.genera(richiesta);
     }
 
     @PostMapping("/solve")
     public PuzzleSolutionResponse risolvi(@RequestBody SolveRequest richiesta) {
-        return servizioPuzzle.solve(richiesta);
+        return servizioPuzzle.risolvi(richiesta);
     }
 }

@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Component
 public class PDBLoader {
@@ -26,58 +25,58 @@ public class PDBLoader {
         this("");
     }
 
-    public PDBLoader(@Value("${puzzle.pdb.dir:pdb}") String pdbDir) {
-        long start = System.nanoTime();
-        this.basiDati = caricaBasiDati(pdbDir);
-        this.msCaricamento = (System.nanoTime() - start) / 1_000_000;
-        this.statiTotali = basiDati.stream().mapToLong(PatternEstimator::stateCount).sum();
+    public PDBLoader(@Value("${puzzle.pdb.dir:pdb}") String dirPdb) {
+        long inizio = System.nanoTime();
+        this.basiDati = caricaBasiDati(dirPdb);
+        this.msCaricamento = (System.nanoTime() - inizio) / 1_000_000;
+        this.statiTotali = basiDati.stream().mapToLong(PatternEstimator::contaStati).sum();
         this.descrizioneModalita = basiDati.stream()
-                .map(PatternEstimator::description)
+                .map(PatternEstimator::descrizione)
                 .reduce((a, b) -> a + "; " + b)
                 .orElse("none");
         System.out.println("PDB caricati: " + basiDati.size() + " pattern, " + statiTotali + " stati in " + msCaricamento + " ms");
         System.out.println("PDB mode: " + descrizioneModalita);
     }
 
-    public int estimate(int[] tiles, int size, Set<Integer> patternSet) {
-        if (size != 4) {
+    public int stima(int[] tessere, int dimensione) {
+        if (dimensione != 4) {
             return 0;
         }
 
-        int sum = 0;
-        for (PatternEstimator db : basiDati) {
-            sum += db.estimate(tiles);
+        int somma = 0;
+        for (PatternEstimator stimatore : basiDati) {
+            somma += stimatore.stima(tessere);
         }
-        return sum;
+        return somma;
     }
 
     private List<PatternEstimator> caricaBasiDati(String dirPdb) {
-        String dirRisolta = (dirPdb == null || dirPdb.isBlank()) ? "pdb" : dirPdb;
-        Path directory = Path.of(dirRisolta);
+        String dirEffettiva = (dirPdb == null || dirPdb.isBlank()) ? "pdb" : dirPdb;
+        Path cartella = Path.of(dirEffettiva);
 
         List<Path> fileSingoli = List.of(
-                directory.resolve("pdb-6-6-3-a.bin"),
-                directory.resolve("pdb-6-6-3-b.bin"),
-                directory.resolve("pdb-6-6-3-c.bin")
+                cartella.resolve("pdb-6-6-3-a.bin"),
+                cartella.resolve("pdb-6-6-3-b.bin"),
+                cartella.resolve("pdb-6-6-3-c.bin")
         );
         if (tuttiPresenti(fileSingoli)) {
             return creaDaFileSingoli(fileSingoli);
         }
 
-        List<Path> segmentiA = caricaSegmenti(directory, "pdb-6-6-3-a");
-        List<Path> segmentiB = caricaSegmenti(directory, "pdb-6-6-3-b");
-        List<Path> segmentiC = caricaSegmenti(directory, "pdb-6-6-3-c");
+        List<Path> segmentiA = caricaSegmenti(cartella, "pdb-6-6-3-a");
+        List<Path> segmentiB = caricaSegmenti(cartella, "pdb-6-6-3-b");
+        List<Path> segmentiC = caricaSegmenti(cartella, "pdb-6-6-3-c");
         if (!segmentiA.isEmpty() && !segmentiB.isEmpty() && !segmentiC.isEmpty()) {
             return creaDaSegmenti(segmentiA, segmentiB, segmentiC);
         }
 
-        throw new IllegalStateException("PDB files not found in " + directory
+        throw new IllegalStateException("PDB files not found in " + cartella
                 + ". Expected pdb-6-6-3-a.bin/b/c.bin or segmented pdb-6-6-3-a.0.bin, etc.");
     }
 
-    private boolean tuttiPresenti(List<Path> files) {
-        for (Path file : files) {
-            if (!Files.isRegularFile(file)) {
+    private boolean tuttiPresenti(List<Path> file) {
+        for (Path percorsoFile : file) {
+            if (!Files.isRegularFile(percorsoFile)) {
                 return false;
             }
         }
@@ -108,27 +107,27 @@ public class PDBLoader {
         }
     }
 
-    private List<Path> caricaSegmenti(Path directory, String prefix) {
+    private List<Path> caricaSegmenti(Path cartella, String prefisso) {
         List<Path> segmenti = new ArrayList<>();
         for (int i = 0; ; i++) {
-            Path segment = directory.resolve(prefix + "." + i + ".bin");
-            if (!Files.isRegularFile(segment)) {
+            Path segmento = cartella.resolve(prefisso + "." + i + ".bin");
+            if (!Files.isRegularFile(segmento)) {
                 break;
             }
-            segmenti.add(segment);
+            segmenti.add(segmento);
         }
         return segmenti;
     }
 
-    public long getLoadElapsedMs() {
+    public long getMsCaricamento() {
         return msCaricamento;
     }
 
-    public long getTotalStates() {
+    public long getStatiTotali() {
         return statiTotali;
     }
 
-    public String getModeDescription() {
+    public String getDescrizioneModalita() {
         return descrizioneModalita;
     }
 }

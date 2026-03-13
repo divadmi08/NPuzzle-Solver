@@ -1,7 +1,7 @@
 package com.mistri.puzzle_solver.PDB.runtime;
 
 interface PatternEstimator {
-    int estimate(int[] board);
-    long stateCount();
-    String description();
+    int stima(int[] tessere);
+    long contaStati();
+    String descrizione();
 }

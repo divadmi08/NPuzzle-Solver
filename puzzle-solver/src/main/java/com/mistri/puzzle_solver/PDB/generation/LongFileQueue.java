@@ -11,39 +11,39 @@ final class LongFileQueue implements AutoCloseable {
     private final RandomAccessFile file;
     private long posizioneLettura;
 
-    LongFileQueue(Path path) throws IOException {
-        this.percorso = path;
-        Files.createDirectories(path.getParent());
-        this.file = new RandomAccessFile(path.toFile(), "rw");
+    LongFileQueue(Path percorso) throws IOException {
+        this.percorso = percorso;
+        Files.createDirectories(percorso.getParent());
+        this.file = new RandomAccessFile(percorso.toFile(), "rw");
         this.posizioneLettura = 0L;
     }
 
-    void add(long value) throws IOException {
+    void aggiungi(long valore) throws IOException {
         file.seek(file.length());
-        file.writeLong(value);
+        file.writeLong(valore);
     }
 
     boolean hasMore() throws IOException {
         return posizioneLettura < file.length();
     }
 
-    long remove() throws IOException {
+    long rimuovi() throws IOException {
         file.seek(posizioneLettura);
-        long value = file.readLong();
+        long valore = file.readLong();
         posizioneLettura += Long.BYTES;
-        return value;
+        return valore;
     }
 
     boolean isEmpty() throws IOException {
         return file.length() == 0L;
     }
 
-    void resetForReuse() throws IOException {
+    void resetPerRiuso() throws IOException {
         file.setLength(0L);
         posizioneLettura = 0L;
     }
 
-    void deleteFile() throws IOException {
+    void eliminaFile() throws IOException {
         close();
         Files.deleteIfExists(percorso);
     }

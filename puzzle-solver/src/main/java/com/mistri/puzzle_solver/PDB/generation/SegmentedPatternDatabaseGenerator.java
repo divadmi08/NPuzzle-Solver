@@ -14,49 +14,49 @@ public class SegmentedPatternDatabaseGenerator {
     private static final byte NON_VISITATO = (byte) 0xFF;
     private static final int[] DELTA_MOSSE = {-DIMENSIONE_GRIGLIA, DIMENSIONE_GRIGLIA, -1, 1};
 
-    public static void main(String[] args) throws IOException {
-        if (args.length < 2 || args.length > 3) {
+    public static void main(String[] argomenti) throws IOException {
+        if (argomenti.length < 2 || argomenti.length > 3) {
             throw new IllegalArgumentException(
                     "Usage: SegmentedPatternDatabaseGenerator <output-dir> <comma-separated-tiles> [segment-size-mb]");
         }
 
-        Path directoryOutput = Path.of(args[0]);
-        int[] tessere = parseTessere(args[1]);
-        int dimensioneSegmentoMb = args.length == 3 ? Integer.parseInt(args[2]) : 1024;
+        Path cartellaOutput = Path.of(argomenti[0]);
+        int[] tessere = leggiTessereDaCsv(argomenti[1]);
+        int dimensioneSegmentoMb = argomenti.length == 3 ? Integer.parseInt(argomenti[2]) : 1024;
 
         PatternIndexer indicizzatore = new PatternIndexer(tessere);
-        long numeroStati = indicizzatore.stateCount();
+        long numeroStati = indicizzatore.contaStati();
         String prefisso = costruisciPrefisso(tessere);
 
         System.out.println("Generating PDB for pattern " + Arrays.toString(tessere));
         System.out.println("States: " + numeroStati);
-        System.out.println("Output dir: " + directoryOutput);
+        System.out.println("Output dir: " + cartellaOutput);
         System.out.println("Segment size MB: " + dimensioneSegmentoMb);
 
-        Path directoryLavoro = directoryOutput.resolve(prefisso + "-work");
-        Files.createDirectories(directoryLavoro);
+        Path cartellaLavoro = cartellaOutput.resolve(prefisso + "-work");
+        Files.createDirectories(cartellaLavoro);
 
-        long start = System.nanoTime();
-        try (MappedDistanceTable distanze = MappedDistanceTable.create(directoryOutput, prefisso, numeroStati, dimensioneSegmentoMb);
-             LongFileQueue codaCorrente = new LongFileQueue(directoryLavoro.resolve("current.queue"));
-             LongFileQueue codaProssima = new LongFileQueue(directoryLavoro.resolve("next.queue"))) {
+        long inizio = System.nanoTime();
+        try (MappedDistanceTable distanze = MappedDistanceTable.crea(cartellaOutput, prefisso, numeroStati, dimensioneSegmentoMb);
+             LongFileQueue codaCorrente = new LongFileQueue(cartellaLavoro.resolve("current.queue"));
+             LongFileQueue codaProssima = new LongFileQueue(cartellaLavoro.resolve("next.queue"))) {
 
-            long rankGoal = indicizzatore.rankPositions(indicizzatore.goalPositions());
-            distanze.set(rankGoal, (byte) 0);
-            codaCorrente.add(rankGoal);
+            long rangoObiettivo = indicizzatore.calcolaRangoPosizioni(indicizzatore.posizioniObiettivo());
+            distanze.scrivi(rangoObiettivo, (byte) 0);
+            codaCorrente.aggiungi(rangoObiettivo);
 
-            int[] posizioniCorrenti = new int[indicizzatore.positionsLength()];
+            int[] posizioniCorrenti = new int[indicizzatore.lunghezzaPosizioni()];
             long visitati = 1L;
             int profondita = 0;
 
             while (!codaCorrente.isEmpty()) {
-                long inizioLayer = System.nanoTime();
-                long processatiLayer = 0L;
+                long inizioStrato = System.nanoTime();
+                long processatiStrato = 0L;
 
                 while (codaCorrente.hasMore()) {
-                    long rank = codaCorrente.remove();
-                    processatiLayer++;
-                    indicizzatore.unrank(rank, posizioniCorrenti);
+                    long rango = codaCorrente.rimuovi();
+                    processatiStrato++;
+                    indicizzatore.ricostruisciPosizioni(rango, posizioniCorrenti);
 
                     int posizioneVuoto = posizioniCorrenti[0];
                     for (int delta : DELTA_MOSSE) {
@@ -71,16 +71,16 @@ public class SegmentedPatternDatabaseGenerator {
                             posizioniCorrenti[indicePatternMosso] = posizioneVuoto;
                         }
 
-                        long prossimoRank = indicizzatore.rankPositions(posizioniCorrenti);
-                        if (distanze.get(prossimoRank) == NON_VISITATO) {
+                        long prossimoRango = indicizzatore.calcolaRangoPosizioni(posizioniCorrenti);
+                        if (distanze.leggi(prossimoRango) == NON_VISITATO) {
                             int costoArco = indicePatternMosso >= 0 ? 1 : 0;
-                            distanze.set(prossimoRank, (byte) (profondita + costoArco));
+                            distanze.scrivi(prossimoRango, (byte) (profondita + costoArco));
                             visitati++;
 
                             if (costoArco == 0) {
-                                codaCorrente.add(prossimoRank);
+                                codaCorrente.aggiungi(prossimoRango);
                             } else {
-                                codaProssima.add(prossimoRank);
+                                codaProssima.aggiungi(prossimoRango);
                             }
                         }
 
@@ -91,13 +91,13 @@ public class SegmentedPatternDatabaseGenerator {
                     }
                 }
 
-                long elapsedMs = (System.nanoTime() - inizioLayer) / 1_000_000;
+                long msTrascorsi = (System.nanoTime() - inizioStrato) / 1_000_000;
                 System.out.println("Depth " + profondita
-                        + " processed=" + processatiLayer
+                        + " processed=" + processatiStrato
                         + " visited=" + visitati
-                        + " elapsedMs=" + elapsedMs);
+                        + " elapsedMs=" + msTrascorsi);
 
-                codaCorrente.resetForReuse();
+                codaCorrente.resetPerRiuso();
 
                 if (codaProssima.isEmpty()) {
                     break;
@@ -107,20 +107,20 @@ public class SegmentedPatternDatabaseGenerator {
                 profondita++;
             }
 
-            long totalMs = (System.nanoTime() - start) / 1_000_000;
-            System.out.println("Completed pattern " + Arrays.toString(tessere) + " in " + totalMs + " ms");
+            long msTotali = (System.nanoTime() - inizio) / 1_000_000;
+            System.out.println("Completed pattern " + Arrays.toString(tessere) + " in " + msTotali + " ms");
             System.out.println("Output segments:");
-            for (Path path : distanze.segmentPaths()) {
-                System.out.println(path);
+            for (Path percorso : distanze.percorsiSegmenti()) {
+                System.out.println(percorso);
             }
         }
     }
 
     private static void scambiaCode(LongFileQueue corrente, LongFileQueue prossima) throws IOException {
         while (prossima.hasMore()) {
-            corrente.add(prossima.remove());
+            corrente.aggiungi(prossima.rimuovi());
         }
-        prossima.resetForReuse();
+        prossima.resetPerRiuso();
     }
 
     private static String costruisciPrefisso(int[] tessere) {
@@ -158,7 +158,7 @@ public class SegmentedPatternDatabaseGenerator {
         return true;
     }
 
-    private static int[] parseTessere(String csv) {
+    private static int[] leggiTessereDaCsv(String csv) {
         String[] parti = csv.split(",");
         int[] tessere = new int[parti.length];
         for (int i = 0; i < parti.length; i++) {

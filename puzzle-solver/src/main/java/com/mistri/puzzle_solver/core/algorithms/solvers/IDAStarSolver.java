@@ -14,99 +14,99 @@ import java.util.Set;
 @Component
 public class IDAStarSolver implements Solver {
 
-    private static final int FOUND = -1;
+    private static final int TROVATO = -1;
 
-    private final Heuristic heuristic;
+    private final Heuristic euristica;
 
-    public IDAStarSolver(Heuristic heuristic) {
-        this.heuristic = heuristic;
+    public IDAStarSolver(Heuristic euristica) {
+        this.euristica = euristica;
     }
 
     @Override
-    public List<Move> solve(PuzzleState start, Set<Integer> patternSet) {
-        if (!start.isSolvable()) {
+    public List<Move> risolvi(PuzzleState statoIniziale) {
+        if (!statoIniziale.isSolvable()) {
             return null;
         }
 
-        int size = start.getGrandezza();
-        int[] board = start.getTiles();
-        int threshold = heuristic.heuristic(board, size, patternSet);
-        ArrayList<Move> path = new ArrayList<>();
-        HashSet<Long> pathStates = new HashSet<>();
-        pathStates.add(PuzzleState.encode(board));
+        int dimensione = statoIniziale.getDimensione();
+        int[] tessere = statoIniziale.getTessere();
+        int soglia = euristica.stima(tessere, dimensione);
+        ArrayList<Move> percorso = new ArrayList<>();
+        HashSet<Long> statiPercorso = new HashSet<>();
+        statiPercorso.add(PuzzleState.codifica(tessere));
 
         while (true) {
-            int temp = dfs(board, size, start.getZeroPos(), 0, threshold, path, pathStates, null, patternSet);
-            if (temp == FOUND) {
-                return List.copyOf(path);
+            int temporaneo = ricercaProfondita(tessere, dimensione, statoIniziale.getPosizioneZero(), 0, soglia, percorso, statiPercorso, null);
+            if (temporaneo == TROVATO) {
+                return List.copyOf(percorso);
             }
-            if (temp == Integer.MAX_VALUE) {
+            if (temporaneo == Integer.MAX_VALUE) {
                 return null;
             }
-            threshold = temp;
+            soglia = temporaneo;
         }
     }
 
-    private int dfs(int[] board, int size, int zeroPos, int g, int threshold, ArrayList<Move> path,
-                    Set<Long> pathStates, Move lastMove, Set<Integer> patternSet) {
-        int h = heuristic.heuristic(board, size, patternSet);
-        int f = g + h;
-        if (f > threshold) {
-            return f;
+    private int ricercaProfondita(int[] tessere, int dimensione, int posizioneZero, int costoG, int soglia,
+                                  ArrayList<Move> percorso, Set<Long> statiPercorso, Move ultimaMossa) {
+        int costoH = euristica.stima(tessere, dimensione);
+        int costoF = costoG + costoH;
+        if (costoF > soglia) {
+            return costoF;
         }
-        if (h == 0) {
-            return FOUND;
+        if (costoH == 0) {
+            return TROVATO;
         }
 
-        int min = Integer.MAX_VALUE;
+        int minimo = Integer.MAX_VALUE;
 
-        for (Move move : Move.values()) {
-            if (lastMove != null && move.isOpposite(lastMove)) {
+        for (Move mossa : Move.values()) {
+            if (ultimaMossa != null && mossa.isOpposite(ultimaMossa)) {
                 continue;
             }
 
-            int nextZeroPos = nextZeroPos(zeroPos, size, move);
-            if (nextZeroPos < 0) {
+            int prossimaPosizioneZero = calcolaProssimaPosizioneZero(posizioneZero, dimensione, mossa);
+            if (prossimaPosizioneZero < 0) {
                 continue;
             }
 
-            swap(board, zeroPos, nextZeroPos);
-            long encoded = PuzzleState.encode(board);
-            if (!pathStates.add(encoded)) {
-                swap(board, zeroPos, nextZeroPos);
+            scambia(tessere, posizioneZero, prossimaPosizioneZero);
+            long codificato = PuzzleState.codifica(tessere);
+            if (!statiPercorso.add(codificato)) {
+                scambia(tessere, posizioneZero, prossimaPosizioneZero);
                 continue;
             }
 
-            path.add(move);
-            int temp = dfs(board, size, nextZeroPos, g + 1, threshold, path, pathStates, move, patternSet);
-            if (temp == FOUND) {
-                return FOUND;
+            percorso.add(mossa);
+            int temporaneo = ricercaProfondita(tessere, dimensione, prossimaPosizioneZero, costoG + 1, soglia, percorso, statiPercorso, mossa);
+            if (temporaneo == TROVATO) {
+                return TROVATO;
             }
-            if (temp < min) {
-                min = temp;
+            if (temporaneo < minimo) {
+                minimo = temporaneo;
             }
-            pathStates.remove(encoded);
-            path.remove(path.size() - 1);
-            swap(board, zeroPos, nextZeroPos);
+            statiPercorso.remove(codificato);
+            percorso.remove(percorso.size() - 1);
+            scambia(tessere, posizioneZero, prossimaPosizioneZero);
         }
 
-        return min;
+        return minimo;
     }
 
-    private int nextZeroPos(int zeroPos, int size, Move move) {
-        int zeroRow = zeroPos / size;
-        int zeroCol = zeroPos % size;
-        int nextRow = zeroRow + move.getMovimentoY();
-        int nextCol = zeroCol + move.getMovimentoX();
-        if (nextRow < 0 || nextRow >= size || nextCol < 0 || nextCol >= size) {
+    private int calcolaProssimaPosizioneZero(int posizioneZero, int dimensione, Move mossa) {
+        int rigaZero = posizioneZero / dimensione;
+        int colonnaZero = posizioneZero % dimensione;
+        int prossimaRiga = rigaZero + mossa.getDeltaRiga();
+        int prossimaColonna = colonnaZero + mossa.getDeltaColonna();
+        if (prossimaRiga < 0 || prossimaRiga >= dimensione || prossimaColonna < 0 || prossimaColonna >= dimensione) {
             return -1;
         }
-        return nextRow * size + nextCol;
+        return prossimaRiga * dimensione + prossimaColonna;
     }
 
-    private void swap(int[] board, int first, int second) {
-        int temp = board[first];
-        board[first] = board[second];
-        board[second] = temp;
+    private void scambia(int[] tessere, int primo, int secondo) {
+        int temporaneo = tessere[primo];
+        tessere[primo] = tessere[secondo];
+        tessere[secondo] = temporaneo;
     }
 }
