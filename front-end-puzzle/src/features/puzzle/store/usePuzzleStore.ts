@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { ColorPaletteMode, Direction, Grid, GridSize, ThemeMode } from '@/features/puzzle/types/puzzle';
 import { DEFAULT_GRID_SIZE, DEFAULT_SPEED, PUZZLE_CONFIGS } from '@/features/puzzle/constants/puzzle';
-import { computeAllStates, applyMove } from '@/features/puzzle/utils/puzzle';
+import { computeAllStates, applyMove, isGridSolved } from '@/features/puzzle/utils/puzzle';
 
 const defaultConfig = PUZZLE_CONFIGS[DEFAULT_GRID_SIZE];
 const { grids: defaultGrids, moves: defaultMoves } = computeAllStates(
@@ -11,17 +11,6 @@ const { grids: defaultGrids, moves: defaultMoves } = computeAllStates(
 
 function cloneGrid(grid: Grid): Grid {
   return grid.map(row => [...row]);
-}
-
-function areGridsEqual(a: Grid, b: Grid): boolean {
-  if (a.length !== b.length) return false;
-  for (let r = 0; r < a.length; r++) {
-    if (a[r].length !== b[r].length) return false;
-    for (let c = 0; c < a[r].length; c++) {
-      if (a[r][c] !== b[r][c]) return false;
-    }
-  }
-  return true;
 }
 
 interface PuzzleState {
@@ -84,6 +73,7 @@ interface PuzzleState {
 
   // Custom board flow
   setCustomBoard: (size: GridSize, grid: Grid) => void;
+  setGeneratedPuzzle: (size: GridSize, initialGrid: Grid, moves: Direction[]) => void;
   setSolutionMovesFromApi: (moves: Direction[]) => void;
 }
 
@@ -186,15 +176,14 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
 
   // Azioni - Game Mode
   playMove: (direction: Direction) => {
-    const { gameMode, manualGrid, allStates, totalSteps } = get();
-    if (gameMode !== 'play') return;
+    const { gameMode, manualGrid, isSolved } = get();
+    if (gameMode !== 'play' || isSolved) return;
 
     try {
       const newGrid = applyMove(manualGrid, direction);
-      const solvedGrid = allStates[totalSteps];
       set({
         manualGrid: newGrid,
-        isSolved: areGridsEqual(newGrid, solvedGrid),
+        isSolved: isGridSolved(newGrid),
       });
     } catch (error) {
       console.warn('Invalid move:', error);
@@ -252,8 +241,8 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
   },
 
   tickElapsed: () => {
-    const { gameMode } = get();
-    if (gameMode !== 'play') return;
+    const { gameMode, isSolved } = get();
+    if (gameMode !== 'play' || isSolved) return;
     set(state => ({ elapsedSeconds: state.elapsedSeconds + 1 }));
   },
 
@@ -299,6 +288,30 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
       step: 0,
       isPlaying: false,
       currentGrid: cloneGrid(customGrid),
+      prevGrid: null,
+      currentMove: null,
+      isSolved: isGridSolved(customGrid),
+      elapsedSeconds: 0,
+    });
+  },
+
+  setGeneratedPuzzle: (size: GridSize, initialGrid: Grid, moves: Direction[]) => {
+    const safeInitialGrid = cloneGrid(initialGrid);
+    const safeMoves = [...moves];
+    const { grids, moves: allMoves } = computeAllStates(safeInitialGrid, safeMoves);
+
+    set({
+      gridSize: size,
+      initialGrid: safeInitialGrid,
+      solutionMoves: safeMoves,
+      allStates: grids,
+      allMoves,
+      totalSteps: grids.length - 1,
+      gameMode: 'play',
+      manualGrid: cloneGrid(grids[0]),
+      step: 0,
+      isPlaying: false,
+      currentGrid: cloneGrid(grids[0]),
       prevGrid: null,
       currentMove: null,
       isSolved: false,

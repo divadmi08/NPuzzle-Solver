@@ -53,4 +53,5 @@ export const useToggleThemeMode = () => usePuzzleStore(s => s.toggleThemeMode);
 export const useSetColorPaletteMode = () => usePuzzleStore(s => s.setColorPaletteMode);
 export const useToggleMusicEnabled = () => usePuzzleStore(s => s.toggleMusicEnabled);
 export const useSetCustomBoard = () => usePuzzleStore(s => s.setCustomBoard);
+export const useSetGeneratedPuzzle = () => usePuzzleStore(s => s.setGeneratedPuzzle);
 export const useSetSolutionMovesFromApi = () => usePuzzleStore(s => s.setSolutionMovesFromApi);

@@ -109,3 +109,31 @@ export function gridToString(grid: Grid): string {
   }
   return grid.map(r => `[${r.join(',')}]`).join(',');
 }
+
+/**
+ * Verifica se la griglia e nello stato finale: numeri in ordine e zero in basso a destra.
+ */
+export function isGridSolved(grid: Grid): boolean {
+  if (!validateGrid(grid)) return false;
+
+  const size = grid.length;
+  let expected = 1;
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const isLastCell = r === size - 1 && c === size - 1;
+
+      if (isLastCell) {
+        return grid[r][c] === 0;
+      }
+
+      if (grid[r][c] !== expected) {
+        return false;
+      }
+
+      expected += 1;
+    }
+  }
+
+  return false;
+}

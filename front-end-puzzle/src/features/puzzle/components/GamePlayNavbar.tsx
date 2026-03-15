@@ -1,8 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { COLOR_PALETTE_LABELS } from '@/features/puzzle/constants/puzzle';
+import { postGeneratePuzzle, postSolvePuzzle } from '@/features/puzzle/api/solverApi';
 import {
   useColorPaletteMode,
   useElapsedSeconds,
@@ -11,7 +12,10 @@ import {
   useGridSize,
   useMusicEnabled,
   useRestartGame,
+  useSetGeneratedPuzzle,
   useSetGridSize,
+  useSetSolutionMovesFromApi,
+  useSolutionMoves,
   useTimerEnabled,
   useThemeMode,
   useTickElapsed,
@@ -29,7 +33,10 @@ export default function GamePlayNavbar() {
   const gameMode = useGameMode();
   const elapsedSeconds = useElapsedSeconds();
   const gridSize = useGridSize();
+  const solutionMoves = useSolutionMoves();
   const setGridSize = useSetGridSize();
+  const setGeneratedPuzzle = useSetGeneratedPuzzle();
+  const setSolutionMovesFromApi = useSetSolutionMovesFromApi();
   const tickElapsed = useTickElapsed();
   const giveUp = useGiveUp();
   const restartGame = useRestartGame();
@@ -39,6 +46,10 @@ export default function GamePlayNavbar() {
   const toggleThemeMode = useToggleThemeMode();
   const colorPaletteMode = useColorPaletteMode();
   const musicEnabled = useMusicEnabled();
+  const [selectedGridSize, setSelectedGridSize] = useState<3 | 4>(gridSize);
+  const [gridLoading, setGridLoading] = useState(false);
+  const [surrenderLoading, setSurrenderLoading] = useState(false);
+  const [gridFeedback, setGridFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     if (gameMode !== 'play' || !timerEnabled) return;
@@ -50,7 +61,47 @@ export default function GamePlayNavbar() {
     return () => clearInterval(id);
   }, [gameMode, timerEnabled, tickElapsed]);
 
+  useEffect(() => {
+    setSelectedGridSize(gridSize);
+  }, [gridSize]);
+
   const formattedTime = useMemo(() => formatTime(elapsedSeconds), [elapsedSeconds]);
+
+  const handleGridSizeChange = async () => {
+    setGridLoading(true);
+    setGridFeedback('Caricamento puzzle da API...');
+
+    try {
+      const generatedPuzzle = await postGeneratePuzzle(selectedGridSize);
+      setGeneratedPuzzle(selectedGridSize, generatedPuzzle.initialGrid, generatedPuzzle.moves);
+      setGridFeedback(null);
+    } catch {
+      setGridSize(selectedGridSize);
+      setGridFeedback('API non disponibile: caricata configurazione locale.');
+    } finally {
+      setGridLoading(false);
+    }
+  };
+
+  const handleGiveUp = async () => {
+    if (solutionMoves.length > 0) {
+      giveUp();
+      return;
+    }
+
+    setSurrenderLoading(true);
+    setGridFeedback('Calcolo soluzione da API...');
+
+    try {
+      const moves = await postSolvePuzzle(gridSize);
+      setSolutionMovesFromApi(moves);
+      setGridFeedback(null);
+    } catch {
+      setGridFeedback('API solve non disponibile: nessuna soluzione ricevuta.');
+    } finally {
+      setSurrenderLoading(false);
+    }
+  };
 
   return (
     <nav className="mx-3 mb-2 sm:mx-4 sm:mb-3 rounded-xl border border-cyan-500/30 bg-slate-900/80 px-3 py-2 sm:px-4 sm:py-3 shadow-lg shadow-cyan-900/40">
@@ -85,15 +136,36 @@ export default function GamePlayNavbar() {
           <label htmlFor="grid-size" className="text-xs uppercase tracking-wide text-gray-400">
             Tabella
           </label>
-          <select
-            id="grid-size"
-            value={gridSize}
-            onChange={(e) => setGridSize(Number(e.target.value) as 3 | 4)}
-            className="rounded-lg border border-gray-600 bg-gray-800 px-2.5 py-1.5 text-sm text-gray-100 outline-none focus:border-cyan-400"
+          <div className="relative">
+            <select
+              id="grid-size"
+              value={selectedGridSize}
+              onChange={(e) => setSelectedGridSize(Number(e.target.value) as 3 | 4)}
+              disabled={gridLoading}
+              className="no-native-arrow rounded-lg border border-gray-600 bg-gray-800 pl-2.5 pr-8 py-1.5 text-sm text-gray-100 outline-none focus:border-cyan-400"
+            >
+              <option value={3}>3 x 3</option>
+              <option value={4}>4 x 4</option>
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-cyan-300" aria-hidden="true">
+              <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path
+                  fillRule="evenodd"
+                  d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.12l3.71-3.89a.75.75 0 1 1 1.08 1.04l-4.25 4.45a.75.75 0 0 1-1.08 0L5.21 8.27a.75.75 0 0 1 .02-1.06Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              void handleGridSizeChange();
+            }}
+            disabled={gridLoading}
+            className="rounded-lg border border-cyan-400/60 bg-cyan-700 px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-60"
           >
-            <option value={3}>3 x 3</option>
-            <option value={4}>4 x 4</option>
-          </select>
+            {gridLoading ? 'Cambio...' : 'Cambia Tabella'}
+          </button>
         </div>
 
         <button
@@ -112,10 +184,13 @@ export default function GamePlayNavbar() {
 
         {gameMode === 'play' ? (
           <button
-            onClick={giveUp}
+            onClick={() => {
+              void handleGiveUp();
+            }}
+            disabled={surrenderLoading}
             className="rounded-lg border border-orange-400/60 bg-orange-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-orange-500"
           >
-            Arrendi
+            {surrenderLoading ? 'Calcolo...' : 'Arrendi'}
           </button>
         ) : (
           <button
@@ -132,6 +207,10 @@ export default function GamePlayNavbar() {
         Palette: <span className="text-gray-200">{COLOR_PALETTE_LABELS[colorPaletteMode]}</span> ·
         Musica: <span className="text-gray-200">{musicEnabled ? 'Attiva' : 'Disattivata'}</span>
       </div>
+
+      {gridFeedback && (
+        <div className="mt-1 text-[11px] sm:text-xs text-amber-300">{gridFeedback}</div>
+      )}
     </nav>
   );
 }

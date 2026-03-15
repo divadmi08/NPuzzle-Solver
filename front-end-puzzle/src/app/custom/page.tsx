@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import type { Direction, GridSize } from '@/features/puzzle/types/puzzle';
+import type { GridSize } from '@/features/puzzle/types/puzzle';
 import { useSetCustomBoard, useSetSolutionMovesFromApi } from '@/features/puzzle/store/puzzleSelectors';
 import { useRouter } from 'next/navigation';
-
-const VALID_DIRECTIONS: Direction[] = ['SINISTRA', 'DESTRA', 'SOPRA', 'SOTTO'];
+import { postSolvePuzzle } from '@/features/puzzle/api/solverApi';
 
 function createEmptyGrid(size: GridSize): number[][] {
   return Array.from({ length: size }, () => Array.from({ length: size }, () => 0));
@@ -44,14 +43,6 @@ function toMatrix(values: number[], size: GridSize): number[][] {
     matrix.push(values.slice(r * size, (r + 1) * size));
   }
   return matrix;
-}
-
-function normalizeMoves(rawMoves: unknown): Direction[] {
-  if (!Array.isArray(rawMoves)) return [];
-  const parsed = rawMoves
-    .map((m) => String(m).toUpperCase().trim())
-    .filter((m): m is Direction => VALID_DIRECTIONS.includes(m as Direction));
-  return parsed;
 }
 
 export default function CustomBoardPage() {
@@ -108,22 +99,7 @@ export default function CustomBoardPage() {
 
     try {
       setCustomBoard(gridSize, grid);
-
-      const response = await fetch('/api/solve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gridSize, grid }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API solve error: ${response.status}`);
-      }
-
-      const payload = await response.json();
-      const moves = normalizeMoves(payload?.moves);
-      if (moves.length === 0) {
-        throw new Error('API non ha restituito mosse valide.');
-      }
+      const moves = await postSolvePuzzle(gridSize);
 
       setSolutionMovesFromApi(moves);
       setFeedback(`Soluzione caricata: ${moves.length} mosse.`);
@@ -136,13 +112,14 @@ export default function CustomBoardPage() {
   };
 
   const cellsCount = gridSize * gridSize;
+  const boardMaxWidth = gridSize === 3 ? 360 : 460;
 
   return (
-    <main className="h-full w-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-8 text-white">
-      <div className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-700 bg-slate-900/80 p-5 sm:p-7 shadow-2xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <main className="h-full w-full overflow-y-auto px-3 py-3 sm:px-5 sm:py-5 text-white">
+      <div className="h-full w-full rounded-2xl border border-slate-700 bg-slate-900/80 p-4 sm:p-6 shadow-2xl flex flex-col">
+        <div className="flex flex-col items-center justify-center gap-3 text-center">
           <h1 className="text-2xl sm:text-3xl font-bold">Tabella Manuale</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <Link
               href="/"
               className="rounded-lg border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm font-semibold hover:bg-gray-700"
@@ -158,8 +135,8 @@ export default function CustomBoardPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-5">
-          <section className="rounded-xl border border-slate-700 bg-slate-800/70 p-4">
+        <div className="mt-5 min-h-0 flex-1 grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <section className="w-full rounded-xl border border-slate-700 bg-slate-800/70 p-4 xl:col-span-1 xl:overflow-y-auto">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">Configurazione</h2>
             <div className="mt-3 flex gap-2">
               <button
@@ -202,23 +179,28 @@ export default function CustomBoardPage() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-slate-700 bg-slate-800/70 p-4">
+          <section className="w-full rounded-xl border border-slate-700 bg-slate-800/70 p-4 flex min-h-0 flex-col xl:col-span-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">Posizione Numeri</h2>
-            <div
-              className="mt-4 grid gap-2"
-              style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
-            >
-              {Array.from({ length: cellsCount }).map((_, index) => (
-                <input
-                  key={index}
-                  type="number"
-                  min={0}
-                  max={maxValue}
-                  value={cellValues[index] ?? ''}
-                  onChange={(e) => updateCell(index, e.target.value)}
-                  className="h-12 rounded-lg border border-slate-600 bg-slate-900 px-3 text-center text-lg font-semibold text-white outline-none focus:border-cyan-400"
-                />
-              ))}
+            <div className="mt-4 min-h-0 flex-1 flex items-center justify-center">
+              <div
+                className="mx-auto grid w-full gap-2"
+                style={{
+                  gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                  maxWidth: `min(${boardMaxWidth}px, calc(100vh - 290px))`,
+                }}
+              >
+                {Array.from({ length: cellsCount }).map((_, index) => (
+                  <input
+                    key={index}
+                    type="number"
+                    min={0}
+                    max={maxValue}
+                    value={cellValues[index] ?? ''}
+                    onChange={(e) => updateCell(index, e.target.value)}
+                    className="no-spinner aspect-square w-full rounded-lg border border-slate-600 bg-slate-900 px-2 text-center text-lg sm:text-xl font-semibold text-white outline-none focus:border-cyan-400"
+                  />
+                ))}
+              </div>
             </div>
 
             {feedback && (

@@ -17,6 +17,7 @@ const PuzzleGrid = memo(function PuzzleGrid() {
   // Scegli quale grid mostrare
   const displayGrid = gameMode === 'play' ? manualGrid : currentGrid;
   const movedTile = gameMode === 'replay' ? getMovedTile(currentGrid, prevGrid) : -1;
+  const solvedTitle = gameMode === 'play' ? 'Vittoria!' : 'Risolto!';
 
   const handleTileClick = (index: number) => {
     if (gameMode !== 'play') return;
@@ -68,12 +69,16 @@ const PuzzleGrid = memo(function PuzzleGrid() {
         ))}
       </div>
 
-      {gameMode === 'replay' && isSolved && (
+      {isSolved && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="bg-black/50 rounded-xl sm:rounded-2xl backdrop-blur-[3px] p-6 sm:p-8 text-center">
             <div className="text-4xl sm:text-5xl mb-2 animate-bounce">🎉</div>
-            <div className="text-lg sm:text-xl font-bold text-green-400">Risolto!</div>
-            <div className="text-xs sm:text-sm text-gray-400 mt-1">in {totalSteps} mosse</div>
+            <div className="text-lg sm:text-xl font-bold text-green-400">{solvedTitle}</div>
+            {gameMode === 'replay' ? (
+              <div className="text-xs sm:text-sm text-gray-400 mt-1">in {totalSteps} mosse</div>
+            ) : (
+              <div className="text-xs sm:text-sm text-gray-400 mt-1">Ordine corretto con spazio in basso a destra</div>
+            )}
           </div>
         </div>
       )}
