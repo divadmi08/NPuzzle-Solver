@@ -33,6 +33,12 @@ public class PuzzleService {
 
         int numeroMosse = (dimensione == 3) ? 50 : 200;
         PuzzleState statoPuzzle = PuzzleGenerator.generaPuzzle(dimensione, numeroMosse);
+        
+        // Verifica che il puzzle sia risolvibile
+        if (!statoPuzzle.isSolvable()) {
+            throw new RuntimeException("Generated puzzle is not solvable");
+        }
+        
         return new PuzzleResponse(statoPuzzle.getGriglia());
     }
 

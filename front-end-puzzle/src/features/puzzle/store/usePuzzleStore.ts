@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ColorPaletteMode, Direction, Grid, GridSize, ThemeMode } from '@/features/puzzle/types/puzzle';
 import { DEFAULT_GRID_SIZE, DEFAULT_SPEED, PUZZLE_CONFIGS } from '@/features/puzzle/constants/puzzle';
 import { computeAllStates, applyMove, isGridSolved } from '@/features/puzzle/utils/puzzle';
+import { postSolvePuzzle } from '@/features/puzzle/api/solverApi';
 
 const defaultConfig = PUZZLE_CONFIGS[DEFAULT_GRID_SIZE];
 const { grids: defaultGrids, moves: defaultMoves } = computeAllStates(
@@ -11,6 +12,23 @@ const { grids: defaultGrids, moves: defaultMoves } = computeAllStates(
 
 function cloneGrid(grid: Grid): Grid {
   return grid.map(row => [...row]);
+}
+
+function generateGoalGrid(size: GridSize): Grid {
+  const grid: Grid = [];
+  let value = 1;
+  for (let i = 0; i < size; i++) {
+    const row: number[] = [];
+    for (let j = 0; j < size; j++) {
+      if (i === size - 1 && j === size - 1) {
+        row.push(0);
+      } else {
+        row.push(value++);
+      }
+    }
+    grid.push(row);
+  }
+  return grid;
 }
 
 interface PuzzleState {
@@ -45,6 +63,7 @@ interface PuzzleState {
   prevGrid: Grid | null;
   currentMove: Direction | null;
   isSolved: boolean;
+  error: string | null;
 
   // Azioni - Replay
   setStep: (step: number) => void;
@@ -59,7 +78,7 @@ interface PuzzleState {
 
   // Azioni - Game Mode
   playMove: (direction: Direction) => void;
-  giveUp: () => void;
+  giveUp: () => Promise<void>;
   restartGame: () => void;
   setGridSize: (size: GridSize) => void;
   tickElapsed: () => void;
@@ -70,10 +89,11 @@ interface PuzzleState {
   toggleThemeMode: () => void;
   setColorPaletteMode: (mode: ColorPaletteMode) => void;
   toggleMusicEnabled: () => void;
+  clearError: () => void;
 
   // Custom board flow
   setCustomBoard: (size: GridSize, grid: Grid) => void;
-  setGeneratedPuzzle: (size: GridSize, initialGrid: Grid, moves: Direction[]) => void;
+  setGeneratedPuzzle: (size: GridSize, initialGrid: Grid, moves: Direction[]) => Promise<void>;
   setSolutionMovesFromApi: (moves: Direction[]) => void;
 }
 
@@ -109,6 +129,7 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
   prevGrid: null,
   currentMove: null,
   isSolved: false,
+  error: null,
 
   // Azioni - Replay
   setStep: (step) => {
@@ -190,26 +211,55 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
     }
   },
 
-  giveUp: () => {
-    const { allStates, allMoves } = get();
-    set({
-      gameMode: 'replay',
-      step: 0,
-      currentGrid: allStates[0],
-      prevGrid: null,
-      currentMove: allMoves[0],
-      isPlaying: false,
-    });
+  giveUp: async () => {
+    const { manualGrid } = get();
+    
+    try {
+      // Chiama l'API per ottenere la soluzione del puzzle corrente
+      const solutionMoves = await postSolvePuzzle(manualGrid);
+      
+      // Genera gli stati dal puzzle mischiato (inizio) al goal (fine)
+      const { grids, moves: allMoves } = computeAllStates(manualGrid, solutionMoves);
+      
+      set({
+        gameMode: 'replay',
+        step: 0,
+        currentGrid: grids[0],
+        prevGrid: null,
+        currentMove: allMoves[0],
+        isPlaying: true,
+        allStates: grids,
+        allMoves,
+        totalSteps: grids.length - 1,
+        error: null,
+      });
+    } catch (error) {
+      console.error('Errore nel risolvere il puzzle:', error);
+      
+      // Estrai il messaggio di errore
+      let errorMessage = 'Errore nella risoluzione del puzzle. Riprova!';
+      if (error instanceof Error) {
+        if (error.message.includes('500') || error.message.includes('not solvable')) {
+          errorMessage = '❌ Puzzle non risolvibile\n\nIl puzzle attuale non può essere risolto. Prova a fare altre mosse o ricarica il gioco!';
+        }
+      }
+
+      set({
+        error: errorMessage,
+      });
+    }
   },
 
   restartGame: () => {
     const { allStates } = get();
+    // allStates[0] = goal, allStates[last] = puzzle mischiato
+    const puzzleStart = allStates[allStates.length - 1] || allStates[0];
     set({
       gameMode: 'play',
-      manualGrid: cloneGrid(allStates[0]),
+      manualGrid: cloneGrid(puzzleStart),
       step: 0,
       isPlaying: false,
-      currentGrid: cloneGrid(allStates[0]),
+      currentGrid: cloneGrid(puzzleStart),
       prevGrid: null,
       currentMove: null,
       isSolved: false,
@@ -274,6 +324,10 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
     set(state => ({ musicEnabled: !state.musicEnabled }));
   },
 
+  clearError: () => {
+    set({ error: null });
+  },
+
   setCustomBoard: (size: GridSize, grid: Grid) => {
     const customGrid = cloneGrid(grid);
     set({
@@ -295,28 +349,68 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
     });
   },
 
-  setGeneratedPuzzle: (size: GridSize, initialGrid: Grid, moves: Direction[]) => {
-    const safeInitialGrid = cloneGrid(initialGrid);
-    const safeMoves = [...moves];
-    const { grids, moves: allMoves } = computeAllStates(safeInitialGrid, safeMoves);
+  setGeneratedPuzzle: async (size: GridSize, initialGrid: Grid, moves: Direction[]) => {
+    // initialGrid dal backend è il puzzle mischiato
+    const scrambledGrid = cloneGrid(initialGrid);
+    
+    // Genera lo stato goal per il playback
+    const goalGrid = generateGoalGrid(size);
 
-    set({
-      gridSize: size,
-      initialGrid: safeInitialGrid,
-      solutionMoves: safeMoves,
-      allStates: grids,
-      allMoves,
-      totalSteps: grids.length - 1,
-      gameMode: 'play',
-      manualGrid: cloneGrid(grids[0]),
-      step: 0,
-      isPlaying: false,
-      currentGrid: cloneGrid(grids[0]),
-      prevGrid: null,
-      currentMove: null,
-      isSolved: false,
-      elapsedSeconds: 0,
-    });
+    try {
+      // Chiama l'API per ottenere le mosse di soluzione
+      const solutionMoves = await postSolvePuzzle(scrambledGrid);
+      
+      // Genera gli stati dal puzzle mischiato (inizio) al goal (fine)
+      const { grids, moves: allMoves } = computeAllStates(scrambledGrid, solutionMoves);
+
+      set({
+        gridSize: size,
+        initialGrid: goalGrid,
+        solutionMoves: solutionMoves,
+        allStates: grids,
+        allMoves,
+        totalSteps: grids.length - 1,
+        gameMode: 'play',
+        manualGrid: cloneGrid(scrambledGrid),
+        step: 0,
+        isPlaying: false,
+        currentGrid: cloneGrid(scrambledGrid),
+        prevGrid: null,
+        currentMove: null,
+        isSolved: false,
+        elapsedSeconds: 0,
+        error: null,
+      });
+    } catch (error) {
+      console.warn('Puzzle irrisolvibile o errore API. Gioco senza playback animato.', error);
+      
+      // Estrai il messaggio di errore
+      let errorMessage = 'Il puzzle generato non è risolvibile. Riprova!';
+      if (error instanceof Error) {
+        if (error.message.includes('500') || error.message.includes('not solvable')) {
+          errorMessage = '❌ Puzzle non risolvibile\n\nIl backend ha generato un puzzle che non può essere risolto. Per favore riprova!';
+        }
+      }
+
+      set({
+        gridSize: size,
+        initialGrid: goalGrid,
+        solutionMoves: [],
+        allStates: [scrambledGrid, goalGrid],
+        allMoves: [null, null],
+        totalSteps: 1,
+        gameMode: 'play',
+        manualGrid: cloneGrid(scrambledGrid),
+        step: 0,
+        isPlaying: false,
+        currentGrid: cloneGrid(scrambledGrid),
+        prevGrid: null,
+        currentMove: null,
+        isSolved: false,
+        elapsedSeconds: 0,
+        error: errorMessage,
+      });
+    }
   },
 
   setSolutionMovesFromApi: (moves: Direction[]) => {

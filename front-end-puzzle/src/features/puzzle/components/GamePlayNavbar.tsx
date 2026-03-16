@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { COLOR_PALETTE_LABELS } from '@/features/puzzle/constants/puzzle';
-import { postGeneratePuzzle, postSolvePuzzle } from '@/features/puzzle/api/solverApi';
+import { postGeneratePuzzle, postSolvePuzzle, ApiConnectionError, ApiTimeoutError, ApiHttpError, ApiPayloadError } from '@/features/puzzle/api/solverApi';
 import {
   useColorPaletteMode,
+  useCurrentGrid,
   useElapsedSeconds,
   useGameMode,
   useGiveUp,
@@ -33,6 +34,7 @@ export default function GamePlayNavbar() {
   const gameMode = useGameMode();
   const elapsedSeconds = useElapsedSeconds();
   const gridSize = useGridSize();
+  const currentGrid = useCurrentGrid();
   const solutionMoves = useSolutionMoves();
   const setGridSize = useSetGridSize();
   const setGeneratedPuzzle = useSetGeneratedPuzzle();
@@ -73,31 +75,45 @@ export default function GamePlayNavbar() {
 
     try {
       const generatedPuzzle = await postGeneratePuzzle(selectedGridSize);
-      setGeneratedPuzzle(selectedGridSize, generatedPuzzle.initialGrid, generatedPuzzle.moves);
+      await setGeneratedPuzzle(selectedGridSize, generatedPuzzle.initialGrid, generatedPuzzle.moves);
       setGridFeedback(null);
-    } catch {
+    } catch (err) {
       setGridSize(selectedGridSize);
-      setGridFeedback('API non disponibile: caricata configurazione locale.');
+      if (err instanceof ApiConnectionError) {
+        setGridFeedback('Impossibile raggiungere il server. Controlla che il backend sia avviato e che l\'indirizzo sia corretto. Caricata configurazione locale.');
+      } else if (err instanceof ApiTimeoutError) {
+        setGridFeedback('Il server non ha risposto in tempo. Caricata configurazione locale.');
+      } else if (err instanceof ApiHttpError) {
+        setGridFeedback(`Errore dal server (HTTP ${err.status}). Caricata configurazione locale.`);
+      } else if (err instanceof ApiPayloadError) {
+        setGridFeedback('Risposta del server non valida. Caricata configurazione locale.');
+      } else {
+        setGridFeedback('API non disponibile: caricata configurazione locale.');
+      }
     } finally {
       setGridLoading(false);
     }
   };
 
   const handleGiveUp = async () => {
-    if (solutionMoves.length > 0) {
-      giveUp();
-      return;
-    }
-
     setSurrenderLoading(true);
-    setGridFeedback('Calcolo soluzione da API...');
+    setGridFeedback(null);
 
     try {
-      const moves = await postSolvePuzzle(gridSize);
-      setSolutionMovesFromApi(moves);
+      await giveUp();
       setGridFeedback(null);
-    } catch {
-      setGridFeedback('API solve non disponibile: nessuna soluzione ricevuta.');
+    } catch (err) {
+      if (err instanceof ApiConnectionError) {
+        setGridFeedback('Impossibile raggiungere il server. Controlla che il backend sia avviato e che l\'indirizzo sia corretto.');
+      } else if (err instanceof ApiTimeoutError) {
+        setGridFeedback('Il server non ha risposto in tempo. Riprova più tardi.');
+      } else if (err instanceof ApiHttpError) {
+        setGridFeedback(`Errore dal server (HTTP ${err.status}). Nessuna soluzione ricevuta.`);
+      } else if (err instanceof ApiPayloadError) {
+        setGridFeedback('Risposta del server non valida. Nessuna soluzione ricevuta.');
+      } else {
+        setGridFeedback('API solve non disponibile: nessuna soluzione ricevuta.');
+      }
     } finally {
       setSurrenderLoading(false);
     }

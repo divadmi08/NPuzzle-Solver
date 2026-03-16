@@ -23,6 +23,7 @@ export const useCurrentGrid = () => usePuzzleStore(s => s.currentGrid);
 export const usePrevGrid = () => usePuzzleStore(s => s.prevGrid);
 export const useCurrentMove = () => usePuzzleStore(s => s.currentMove);
 export const useIsSolved = () => usePuzzleStore(s => s.isSolved);
+export const useError = () => usePuzzleStore(s => s.error);
 
 // Game mode selectors
 export const useGameMode = () => usePuzzleStore(s => s.gameMode);
@@ -52,6 +53,7 @@ export const useSetThemeMode = () => usePuzzleStore(s => s.setThemeMode);
 export const useToggleThemeMode = () => usePuzzleStore(s => s.toggleThemeMode);
 export const useSetColorPaletteMode = () => usePuzzleStore(s => s.setColorPaletteMode);
 export const useToggleMusicEnabled = () => usePuzzleStore(s => s.toggleMusicEnabled);
+export const useClearError = () => usePuzzleStore(s => s.clearError);
 export const useSetCustomBoard = () => usePuzzleStore(s => s.setCustomBoard);
 export const useSetGeneratedPuzzle = () => usePuzzleStore(s => s.setGeneratedPuzzle);
 export const useSetSolutionMovesFromApi = () => usePuzzleStore(s => s.setSolutionMovesFromApi);

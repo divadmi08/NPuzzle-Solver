@@ -11,13 +11,15 @@ import MoveList from '@/features/puzzle/components/MoveList';
 import StatesPreview from '@/features/puzzle/components/StatesPreview';
 import Footer from '@/features/puzzle/components/Footer';
 import GamePlayNavbar from '@/features/puzzle/components/GamePlayNavbar';
-import { useGameMode, useThemeMode } from '@/features/puzzle/store/puzzleSelectors';
+import { useGameMode, useThemeMode, useError, useClearError } from '@/features/puzzle/store/puzzleSelectors';
 
 export default function App() {
   // Attiva il loop di autoplay
   usePlayback();
   const gameMode = useGameMode();
   const themeMode = useThemeMode();
+  const error = useError();
+  const clearError = useClearError();
 
   const rootThemeClass =
     themeMode === 'dark'
@@ -80,6 +82,21 @@ export default function App() {
           </aside>
         </div>
       </div>
+
+      {error && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-black/50 rounded-xl sm:rounded-2xl backdrop-blur-[3px] p-6 sm:p-8 text-center">
+            <div className="text-4xl sm:text-5xl mb-2">❌</div>
+            <div className="text-lg sm:text-xl font-bold text-red-400 whitespace-pre-wrap mb-4">{error}</div>
+            <button
+              onClick={clearError}
+              className="mt-4 px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

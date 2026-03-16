@@ -134,6 +134,7 @@ public class PuzzleState {
         boolean vuotaSuRigaPariDalBasso = (rigaVuotaDalBasso & 1) == 0;
         boolean inversioniPari = (inversioni & 1) == 0;
         return vuotaSuRigaPariDalBasso != inversioniPari;
+
     }
 
     public static long codifica(int[] tessere) {

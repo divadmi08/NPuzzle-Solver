@@ -54,6 +54,7 @@ export default function CustomBoardPage() {
   const [cellValues, setCellValues] = useState<string[]>(Array.from({ length: 16 }, (_, i) => String(i)));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const maxValue = useMemo(() => gridSize * gridSize - 1, [gridSize]);
 
@@ -99,13 +100,18 @@ export default function CustomBoardPage() {
 
     try {
       setCustomBoard(gridSize, grid);
-      const moves = await postSolvePuzzle(gridSize);
+      const moves = await postSolvePuzzle(grid);
 
       setSolutionMovesFromApi(moves);
       setFeedback(`Soluzione caricata: ${moves.length} mosse.`);
       router.push('/game');
-    } catch {
-      setFeedback('API non disponibile o risposta non valida. La tabella e stata salvata comunque.');
+    } catch (err) {
+      // Verifica se è un errore di puzzle non risolvibile
+      if (err instanceof Error && (err.message.includes('500') || err.message.includes('not solvable'))) {
+        setError('❌ Tabella non risolvibile\n\nLa tabella inserita non può essere risolta. Verifica i numeri e riprova!');
+      } else {
+        setFeedback('API non disponibile o risposta non valida. La tabella è stata salvata comunque.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -211,6 +217,21 @@ export default function CustomBoardPage() {
           </section>
         </div>
       </div>
+
+      {error && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-black/50 rounded-xl sm:rounded-2xl backdrop-blur-[3px] p-6 sm:p-8 text-center">
+            <div className="text-4xl sm:text-5xl mb-2">❌</div>
+            <div className="text-lg sm:text-xl font-bold text-red-400 whitespace-pre-wrap mb-4">{error}</div>
+            <button
+              onClick={() => setError(null)}
+              className="mt-4 px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
