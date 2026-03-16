@@ -223,6 +223,7 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
       
       set({
         gameMode: 'replay',
+        initialGrid: cloneGrid(manualGrid),
         step: 0,
         currentGrid: grids[0],
         prevGrid: null,
@@ -365,7 +366,7 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
 
       set({
         gridSize: size,
-        initialGrid: goalGrid,
+        initialGrid: cloneGrid(scrambledGrid),
         solutionMoves: solutionMoves,
         allStates: grids,
         allMoves,
@@ -394,7 +395,7 @@ export const usePuzzleStore = create<PuzzleState>((set, get) => ({
 
       set({
         gridSize: size,
-        initialGrid: goalGrid,
+        initialGrid: cloneGrid(scrambledGrid),
         solutionMoves: [],
         allStates: [scrambledGrid, goalGrid],
         allMoves: [null, null],
