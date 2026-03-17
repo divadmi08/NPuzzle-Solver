@@ -6,7 +6,6 @@ import com.mistri.puzzle_solver.api.response.PuzzleResponse;
 import com.mistri.puzzle_solver.api.response.PuzzleSolutionResponse;
 import com.mistri.puzzle_solver.api.service.PuzzleService;
 import org.springframework.web.bind.annotation.*;
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/puzzle")
 public class PuzzleController {

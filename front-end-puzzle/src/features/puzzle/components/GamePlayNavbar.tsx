@@ -206,7 +206,7 @@ export default function GamePlayNavbar() {
             disabled={surrenderLoading}
             className="rounded-lg border border-orange-400/60 bg-orange-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-orange-500"
           >
-            {surrenderLoading ? 'Calcolo...' : 'Arrendi'}
+            {surrenderLoading ? 'Calcolo...' : 'Arrenditi'}
           </button>
         ) : (
           <button
