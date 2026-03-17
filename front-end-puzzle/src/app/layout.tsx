@@ -9,15 +9,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="it">
-      <Provider>
-        <body className="h-screen w-screen overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-900 to-black">
+      <body className="h-screen w-screen overflow-hidden bg-linear-to-br from-blue-900 via-indigo-900 to-black">
+        <Provider>
           <div className="h-full w-full flex items-center justify-center p-2 sm:p-4">
-            <div className="w-full h-full max-w-[1700px] bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 flex flex-col overflow-hidden">
+            <div className="w-full h-full max-w-425 bg-slate-900/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700 flex flex-col overflow-hidden">
               {children}
             </div>
           </div>
-        </body>
-      </Provider>
+        </Provider>
+      </body>
     </html>
   );
 }

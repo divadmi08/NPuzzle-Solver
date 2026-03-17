@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { useStep, useJumpToStep, useSolutionMoves } from '@/features/puzzle/store/puzzleSelectors';
+import type { Direction } from '@/features/puzzle/types/puzzle';
+import { useStep, useJumpToStep, useAllMoves } from '@/features/puzzle/store/puzzleSelectors';
 import { DIRECTION_LABELS } from '@/features/puzzle/constants/puzzle';
 
 export default function MoveList() {
   const step = useStep();
   const jumpToStep = useJumpToStep();
-  const moves = useSolutionMoves();
+  const allMoves = useAllMoves();
+  const moves = allMoves.filter((move): move is Direction => move !== null);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll alla mossa attiva
@@ -25,7 +27,7 @@ export default function MoveList() {
       <h2 className="text-xs sm:text-sm font-semibold text-gray-400 mb-2 sm:mb-3 uppercase tracking-wider">
         Sequenza Mosse ({moves.length})
       </h2>
-      <div ref={listRef} className="max-h-44 overflow-y-auto pr-1 flex flex-wrap gap-1 sm:gap-1.5">
+      <div ref={listRef} className="neon-scrollbar max-h-44 overflow-y-auto pr-1.5 flex flex-wrap gap-1 sm:gap-1.5">
         {moves.map((move, i) => {
           const moveIndex = i + 1;
           const isActive = moveIndex === step;

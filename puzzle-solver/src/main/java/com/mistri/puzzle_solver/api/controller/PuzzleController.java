@@ -2,6 +2,7 @@ package com.mistri.puzzle_solver.api.controller;
 
 import com.mistri.puzzle_solver.api.request.GenerateRequest;
 import com.mistri.puzzle_solver.api.request.SolveRequest;
+import com.mistri.puzzle_solver.api.response.PuzzleMinMovesResponse;
 import com.mistri.puzzle_solver.api.response.PuzzleResponse;
 import com.mistri.puzzle_solver.api.response.PuzzleSolutionResponse;
 import com.mistri.puzzle_solver.api.service.PuzzleService;
@@ -24,5 +25,10 @@ public class PuzzleController {
     @PostMapping("/solve")
     public PuzzleSolutionResponse risolvi(@RequestBody SolveRequest richiesta) {
         return servizioPuzzle.risolvi(richiesta);
+    }
+
+    @PostMapping("/min-moves")
+    public PuzzleMinMovesResponse mosseMinime(@RequestBody SolveRequest richiesta) {
+        return servizioPuzzle.mosseMinime(richiesta);
     }
 }

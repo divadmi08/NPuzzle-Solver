@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import type { GridSize } from '@/features/puzzle/types/puzzle';
 import { useSetCustomBoard, useSetSolutionMovesFromApi } from '@/features/puzzle/store/puzzleSelectors';
 import { useRouter } from 'next/navigation';
-import { postSolvePuzzle } from '@/features/puzzle/api/solverApi';
+import { getApiErrorMessage, isUnsolvableApiError, postSolvePuzzle } from '@/features/puzzle/api/solverApi';
 
 function createEmptyGrid(size: GridSize): number[][] {
   return Array.from({ length: size }, () => Array.from({ length: size }, () => 0));
@@ -106,11 +106,11 @@ export default function CustomBoardPage() {
       setFeedback(`Soluzione caricata: ${moves.length} mosse.`);
       router.push('/game');
     } catch (err) {
-      // Verifica se è un errore di puzzle non risolvibile
-      if (err instanceof Error && (err.message.includes('500') || err.message.includes('not solvable'))) {
+      if (isUnsolvableApiError(err)) {
         setError('❌ Tabella non risolvibile\n\nLa tabella inserita non può essere risolta. Verifica i numeri e riprova!');
       } else {
-        setFeedback('API non disponibile o risposta non valida. La tabella è stata salvata comunque.');
+        const message = getApiErrorMessage(err, 'API non disponibile o risposta non valida.');
+        setFeedback(`${message} La tabella è stata salvata comunque.`);
       }
     } finally {
       setIsSubmitting(false);

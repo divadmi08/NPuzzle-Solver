@@ -1,22 +1,23 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { COLOR_PALETTE_LABELS } from '@/features/puzzle/constants/puzzle';
-import { postGeneratePuzzle, postSolvePuzzle, ApiConnectionError, ApiTimeoutError, ApiHttpError, ApiPayloadError } from '@/features/puzzle/api/solverApi';
+import { getApiErrorMessage, postGeneratePuzzle } from '@/features/puzzle/api/solverApi';
 import {
   useColorPaletteMode,
-  useCurrentGrid,
   useElapsedSeconds,
   useGameMode,
   useGiveUp,
   useGridSize,
+  useInitialGrid,
+  useMinimumMoves,
   useMusicEnabled,
+  usePlayerMoves,
+  useRefreshMinimumMoves,
   useRestartGame,
   useSetGeneratedPuzzle,
   useSetGridSize,
-  useSetSolutionMovesFromApi,
-  useSolutionMoves,
   useTimerEnabled,
   useThemeMode,
   useTickElapsed,
@@ -34,11 +35,12 @@ export default function GamePlayNavbar() {
   const gameMode = useGameMode();
   const elapsedSeconds = useElapsedSeconds();
   const gridSize = useGridSize();
-  const currentGrid = useCurrentGrid();
-  const solutionMoves = useSolutionMoves();
+  const initialGrid = useInitialGrid();
+  const playerMoves = usePlayerMoves();
+  const minimumMoves = useMinimumMoves();
+  const refreshMinimumMoves = useRefreshMinimumMoves();
   const setGridSize = useSetGridSize();
   const setGeneratedPuzzle = useSetGeneratedPuzzle();
-  const setSolutionMovesFromApi = useSetSolutionMovesFromApi();
   const tickElapsed = useTickElapsed();
   const giveUp = useGiveUp();
   const restartGame = useRestartGame();
@@ -52,6 +54,8 @@ export default function GamePlayNavbar() {
   const [gridLoading, setGridLoading] = useState(false);
   const [surrenderLoading, setSurrenderLoading] = useState(false);
   const [gridFeedback, setGridFeedback] = useState<string | null>(null);
+  const initialMinimumMovesRequestedRef = useRef(false);
+  const minMovesLoading = gameMode === 'play' && minimumMoves === null;
 
   useEffect(() => {
     if (gameMode !== 'play' || !timerEnabled) return;
@@ -67,29 +71,26 @@ export default function GamePlayNavbar() {
     setSelectedGridSize(gridSize);
   }, [gridSize]);
 
+  useEffect(() => {
+    if (initialMinimumMovesRequestedRef.current) return;
+    initialMinimumMovesRequestedRef.current = true;
+    void refreshMinimumMoves(initialGrid);
+  }, [initialGrid, refreshMinimumMoves]);
+
   const formattedTime = useMemo(() => formatTime(elapsedSeconds), [elapsedSeconds]);
 
-  const handleGridSizeChange = async () => {
+  const handleGridSizeChange = async (nextGridSize: 3 | 4) => {
     setGridLoading(true);
     setGridFeedback('Caricamento puzzle da API...');
 
     try {
-      const generatedPuzzle = await postGeneratePuzzle(selectedGridSize);
-      await setGeneratedPuzzle(selectedGridSize, generatedPuzzle.initialGrid, generatedPuzzle.moves);
+      const generatedPuzzle = await postGeneratePuzzle(nextGridSize);
+      await setGeneratedPuzzle(nextGridSize, generatedPuzzle.initialGrid, generatedPuzzle.moves);
       setGridFeedback(null);
     } catch (err) {
-      setGridSize(selectedGridSize);
-      if (err instanceof ApiConnectionError) {
-        setGridFeedback('Impossibile raggiungere il server. Controlla che il backend sia avviato e che l\'indirizzo sia corretto. Caricata configurazione locale.');
-      } else if (err instanceof ApiTimeoutError) {
-        setGridFeedback('Il server non ha risposto in tempo. Caricata configurazione locale.');
-      } else if (err instanceof ApiHttpError) {
-        setGridFeedback(`Errore dal server (HTTP ${err.status}). Caricata configurazione locale.`);
-      } else if (err instanceof ApiPayloadError) {
-        setGridFeedback('Risposta del server non valida. Caricata configurazione locale.');
-      } else {
-        setGridFeedback('API non disponibile: caricata configurazione locale.');
-      }
+      setGridSize(nextGridSize);
+      const message = getApiErrorMessage(err, 'API non disponibile.');
+      setGridFeedback(`${message} Caricata configurazione locale.`);
     } finally {
       setGridLoading(false);
     }
@@ -103,25 +104,17 @@ export default function GamePlayNavbar() {
       await giveUp();
       setGridFeedback(null);
     } catch (err) {
-      if (err instanceof ApiConnectionError) {
-        setGridFeedback('Impossibile raggiungere il server. Controlla che il backend sia avviato e che l\'indirizzo sia corretto.');
-      } else if (err instanceof ApiTimeoutError) {
-        setGridFeedback('Il server non ha risposto in tempo. Riprova più tardi.');
-      } else if (err instanceof ApiHttpError) {
-        setGridFeedback(`Errore dal server (HTTP ${err.status}). Nessuna soluzione ricevuta.`);
-      } else if (err instanceof ApiPayloadError) {
-        setGridFeedback('Risposta del server non valida. Nessuna soluzione ricevuta.');
-      } else {
-        setGridFeedback('API solve non disponibile: nessuna soluzione ricevuta.');
-      }
+      const message = getApiErrorMessage(err, 'API solve non disponibile.');
+      setGridFeedback(`${message} Nessuna soluzione ricevuta.`);
     } finally {
       setSurrenderLoading(false);
     }
   };
 
   return (
-    <nav className="mx-3 mb-2 sm:mx-4 sm:mb-3 rounded-xl border border-cyan-500/30 bg-slate-900/80 px-3 py-2 sm:px-4 sm:py-3 shadow-lg shadow-cyan-900/40">
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+    <>
+      <nav className="mx-3 mb-2 sm:mx-4 sm:mb-3 rounded-xl border border-cyan-500/30 bg-slate-900/80 px-3 py-2 sm:px-4 sm:py-3 shadow-lg shadow-cyan-900/40">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-2">
           <Link
             href="/"
@@ -148,7 +141,16 @@ export default function GamePlayNavbar() {
           <span className="font-mono text-sm sm:text-base text-cyan-300">{formattedTime}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 rounded-lg border border-gray-700/60 bg-gray-900/70 px-3 py-1.5">
+          <span className="text-xs uppercase tracking-wide text-gray-400">Mosse</span>
+          <span className="font-mono text-sm sm:text-base text-emerald-300">
+            {playerMoves}
+            {minimumMoves === null ? ' / ...' : ` / ${minimumMoves}`}
+          </span>
+          {minMovesLoading && <span className="inline-block h-2 w-2 rounded-full bg-cyan-300 animate-pulse" aria-label="Calcolo mosse minime" title="Calcolo mosse minime in corso" />}
+        </div>
+
+        <div className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-linear-to-r from-slate-900/80 via-slate-800/70 to-slate-900/80 px-2 py-1.5 shadow-md shadow-cyan-900/20">
           <label htmlFor="grid-size" className="text-xs uppercase tracking-wide text-gray-400">
             Tabella
           </label>
@@ -156,14 +158,20 @@ export default function GamePlayNavbar() {
             <select
               id="grid-size"
               value={selectedGridSize}
-              onChange={(e) => setSelectedGridSize(Number(e.target.value) as 3 | 4)}
+              onChange={(e) => {
+                const nextGridSize = Number(e.target.value) as 3 | 4;
+                setSelectedGridSize(nextGridSize);
+                if (nextGridSize !== gridSize) {
+                  void handleGridSizeChange(nextGridSize);
+                }
+              }}
               disabled={gridLoading}
-              className="no-native-arrow rounded-lg border border-gray-600 bg-gray-800 pl-2.5 pr-8 py-1.5 text-sm text-gray-100 outline-none focus:border-cyan-400"
+              className="no-native-arrow rounded-lg border border-cyan-500/40 bg-slate-800/95 pl-3 pr-9 py-1.5 text-sm font-semibold text-cyan-100 outline-none transition-all focus:border-cyan-300 focus:ring-2 focus:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <option value={3}>3 x 3</option>
               <option value={4}>4 x 4</option>
             </select>
-            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-cyan-300" aria-hidden="true">
+            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-cyan-200" aria-hidden="true">
               <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
                 <path
                   fillRule="evenodd"
@@ -175,13 +183,14 @@ export default function GamePlayNavbar() {
           </div>
           <button
             onClick={() => {
-              void handleGridSizeChange();
+              void handleGridSizeChange(selectedGridSize);
             }}
             disabled={gridLoading}
             className="rounded-lg border border-cyan-400/60 bg-cyan-700 px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-60"
           >
-            {gridLoading ? 'Cambio...' : 'Cambia Tabella'}
+            Rigenera
           </button>
+          {gridLoading && <span className="text-[11px] sm:text-xs font-semibold text-cyan-300">Cambio...</span>}
         </div>
 
         <button
@@ -216,17 +225,28 @@ export default function GamePlayNavbar() {
             Riprova
           </button>
         )}
-      </div>
+        </div>
 
-      <div className="mt-2 text-[11px] sm:text-xs text-gray-400">
-        Tema: <span className="text-gray-200">{themeMode === 'dark' ? 'Scuro' : 'Chiaro'}</span> ·
-        Palette: <span className="text-gray-200">{COLOR_PALETTE_LABELS[colorPaletteMode]}</span> ·
-        Musica: <span className="text-gray-200">{musicEnabled ? 'Attiva' : 'Disattivata'}</span>
-      </div>
+        <div className="mt-2 text-[11px] sm:text-xs text-gray-400">
+          Tema: <span className="text-gray-200">{themeMode === 'dark' ? 'Scuro' : 'Chiaro'}</span> ·
+          Palette: <span className="text-gray-200">{COLOR_PALETTE_LABELS[colorPaletteMode]}</span> ·
+          Musica: <span className="text-gray-200">{musicEnabled ? 'Attiva' : 'Disattivata'}</span>
+          {minMovesLoading ? ' · Calcolo mosse minime in corso...' : ''}
+        </div>
 
-      {gridFeedback && (
-        <div className="mt-1 text-[11px] sm:text-xs text-amber-300">{gridFeedback}</div>
+        {gridFeedback && (
+          <div className="mt-1 text-[11px] sm:text-xs text-amber-300">{gridFeedback}</div>
+        )}
+      </nav>
+
+      {surrenderLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[2px]">
+          <div className="rounded-xl border border-cyan-500/30 bg-slate-900/90 px-6 py-5 text-center shadow-2xl shadow-cyan-900/35">
+            <div className="mx-auto h-10 w-10 rounded-full border-4 border-cyan-400/25 border-t-cyan-300 animate-spin" aria-hidden="true" />
+            <p className="mt-3 text-sm font-semibold text-cyan-100">Calcolo soluzione in corso...</p>
+          </div>
+        </div>
       )}
-    </nav>
+    </>
   );
 }

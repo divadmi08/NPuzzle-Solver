@@ -5,10 +5,8 @@ import { COLOR_PALETTE_LABELS } from '@/features/puzzle/constants/puzzle';
 import type { ColorPaletteMode } from '@/features/puzzle/types/puzzle';
 import {
   useColorPaletteMode,
-  useMusicEnabled,
   useSetColorPaletteMode,
   useThemeMode,
-  useToggleMusicEnabled,
   useToggleThemeMode,
 } from '@/features/puzzle/store/puzzleSelectors';
 
@@ -25,20 +23,26 @@ export default function SettingsPage() {
   const toggleThemeMode = useToggleThemeMode();
   const colorPaletteMode = useColorPaletteMode();
   const setColorPaletteMode = useSetColorPaletteMode();
-  const musicEnabled = useMusicEnabled();
-  const toggleMusicEnabled = useToggleMusicEnabled();
 
   return (
     <main className="w-full h-full overflow-y-auto px-4 py-5 sm:px-6 sm:py-8 text-white">
       <div className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-700 bg-slate-900/80 p-5 sm:p-7 shadow-2xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl sm:text-3xl font-bold">Impostazioni</h1>
-          <Link
-            href="/game"
-            className="rounded-lg border border-cyan-500/60 bg-cyan-700 px-3 py-1.5 text-sm font-semibold hover:bg-cyan-600"
-          >
-            Torna al Gioco
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="rounded-lg border border-gray-600 bg-gray-800 px-3 py-1.5 text-sm font-semibold hover:bg-gray-700"
+            >
+              Home
+            </Link>
+            <Link
+              href="/game"
+              className="rounded-lg border border-cyan-500/60 bg-cyan-700 px-3 py-1.5 text-sm font-semibold hover:bg-cyan-600"
+            >
+              Torna al Gioco
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 space-y-5">
@@ -71,17 +75,6 @@ export default function SettingsPage() {
                 </button>
               ))}
             </div>
-          </section>
-
-          <section className="rounded-xl border border-slate-700 bg-slate-800/70 p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">Musica</h2>
-            <p className="mt-1 text-xs text-slate-400">Attiva o disattiva la musica del gioco.</p>
-            <button
-              onClick={toggleMusicEnabled}
-              className="mt-3 rounded-lg border border-violet-400/60 bg-violet-700 px-4 py-2 text-sm font-semibold hover:bg-violet-600"
-            >
-              {musicEnabled ? 'Disattiva Musica' : 'Attiva Musica'}
-            </button>
           </section>
         </div>
       </div>

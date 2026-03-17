@@ -1,8 +1,29 @@
-import { memo } from 'react';
-import { useCurrentGrid, usePrevGrid, useIsSolved, useTotalSteps, useGameMode, useManualGrid, usePlayMove, useGridSize } from '@/features/puzzle/store/puzzleSelectors';
+import { memo, useEffect, useState } from 'react';
+import {
+  useCurrentGrid,
+  useElapsedSeconds,
+  useSetGeneratedPuzzle,
+  useSetGridSize,
+  usePrevGrid,
+  useIsSolved,
+  useTotalSteps,
+  useGameMode,
+  useManualGrid,
+  usePlayMove,
+  useGridSize,
+  useMinimumMoves,
+  usePlayerMoves,
+} from '@/features/puzzle/store/puzzleSelectors';
+import { postGeneratePuzzle } from '@/features/puzzle/api/solverApi';
 import { DIRECTION_DELTAS } from '@/features/puzzle/constants/puzzle';
 import { getMovedTile } from '@/features/puzzle/utils/puzzle';
 import Tile from './Tile';
+
+function formatTime(totalSeconds: number): string {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
 
 const PuzzleGrid = memo(function PuzzleGrid() {
   const gameMode = useGameMode();
@@ -12,12 +33,43 @@ const PuzzleGrid = memo(function PuzzleGrid() {
   const prevGrid = usePrevGrid();
   const isSolved = useIsSolved();
   const totalSteps = useTotalSteps();
+  const playerMoves = usePlayerMoves();
+  const minimumMoves = useMinimumMoves();
+  const elapsedSeconds = useElapsedSeconds();
+  const setGeneratedPuzzle = useSetGeneratedPuzzle();
+  const setGridSize = useSetGridSize();
   const playMove = usePlayMove();
+  const [dismissSolvedPopup, setDismissSolvedPopup] = useState(false);
+  const [loadingNewPuzzle, setLoadingNewPuzzle] = useState(false);
 
   // Scegli quale grid mostrare
   const displayGrid = gameMode === 'play' ? manualGrid : currentGrid;
   const movedTile = gameMode === 'replay' ? getMovedTile(currentGrid, prevGrid) : -1;
   const solvedTitle = gameMode === 'play' ? 'Vittoria!' : 'Risolto!';
+  const shouldShowSolvedPopup = isSolved && !dismissSolvedPopup;
+
+  useEffect(() => {
+    if (!isSolved) {
+      setDismissSolvedPopup(false);
+      setLoadingNewPuzzle(false);
+    }
+  }, [isSolved]);
+
+  const handlePlayAgain = async () => {
+    if (loadingNewPuzzle) return;
+
+    setDismissSolvedPopup(true);
+    setLoadingNewPuzzle(true);
+
+    try {
+      const generatedPuzzle = await postGeneratePuzzle(gridSize);
+      await setGeneratedPuzzle(gridSize, generatedPuzzle.initialGrid, generatedPuzzle.moves);
+    } catch {
+      setGridSize(gridSize);
+    } finally {
+      setLoadingNewPuzzle(false);
+    }
+  };
 
   const handleTileClick = (index: number) => {
     if (gameMode !== 'play') return;
@@ -69,16 +121,37 @@ const PuzzleGrid = memo(function PuzzleGrid() {
         ))}
       </div>
 
-      {isSolved && (
+      {shouldShowSolvedPopup && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-black/50 rounded-xl sm:rounded-2xl backdrop-blur-[3px] p-6 sm:p-8 text-center">
-            <div className="text-4xl sm:text-5xl mb-2 animate-bounce">🎉</div>
+          <div className="bg-black/55 rounded-xl sm:rounded-2xl backdrop-blur-[3px] p-6 sm:p-8 text-center border border-emerald-400/30 min-w-65">
             <div className="text-lg sm:text-xl font-bold text-green-400">{solvedTitle}</div>
+            <div className="text-xs sm:text-sm text-cyan-300 mt-1">
+              Tempo risoluzione puzzle: {formatTime(elapsedSeconds)}
+            </div>
             {gameMode === 'replay' ? (
               <div className="text-xs sm:text-sm text-gray-400 mt-1">in {totalSteps} mosse</div>
             ) : (
-              <div className="text-xs sm:text-sm text-gray-400 mt-1">Ordine corretto con spazio in basso a destra</div>
+              <div className="mt-1">
+                <div className="text-xs sm:text-sm text-gray-300">
+                  Hai risolto in <span className="font-semibold text-emerald-300">{playerMoves}</span> mosse
+                </div>
+                <div className="text-xs sm:text-sm text-gray-400">
+                  {minimumMoves === null
+                    ? 'Mosse minime: in attesa del backend'
+                    : `Minimo ottimale: ${minimumMoves} mosse`}
+                </div>
+              </div>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                void handlePlayAgain();
+              }}
+              disabled={loadingNewPuzzle}
+              className="mt-4 rounded-lg border border-cyan-400/60 bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-60"
+            >
+              {loadingNewPuzzle ? 'Caricamento...' : 'Gioca ancora'}
+            </button>
           </div>
         </div>
       )}

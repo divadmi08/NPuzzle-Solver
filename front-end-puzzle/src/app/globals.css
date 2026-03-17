@@ -46,3 +46,155 @@ select.no-native-arrow {
 select.no-native-arrow::-ms-expand {
   display: none;
 }
+
+.neon-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 182, 212, 0.9) rgba(15, 23, 42, 0.75);
+}
+
+.neon-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.neon-scrollbar::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.95));
+  border-radius: 999px;
+  border: 1px solid rgba(71, 85, 105, 0.35);
+}
+
+.neon-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.95), rgba(168, 85, 247, 0.95));
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.9);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.45);
+}
+
+.neon-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(103, 232, 249, 1), rgba(217, 70, 239, 1));
+}
+
+.speed-slider {
+  --slider-fill: 50%;
+  appearance: none;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(71, 85, 105, 0.55);
+  background:
+    linear-gradient(90deg,
+      rgba(34, 211, 238, 0.95) 0,
+      rgba(168, 85, 247, 0.95) var(--slider-fill),
+      rgba(51, 65, 85, 0.95) var(--slider-fill),
+      rgba(30, 41, 59, 0.95) 100%);
+  box-shadow: inset 0 0 0 1px rgba(2, 6, 23, 0.35), 0 0 12px rgba(14, 165, 233, 0.12);
+}
+
+.speed-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(2, 6, 23, 0.85);
+  background: radial-gradient(circle at 30% 30%, #f0fdff, #67e8f9 45%, #a855f7 100%);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.55);
+  cursor: pointer;
+}
+
+.speed-slider::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(71, 85, 105, 0.55);
+  background: rgba(30, 41, 59, 0.95);
+}
+
+.speed-slider::-moz-range-progress {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.95), rgba(168, 85, 247, 0.95));
+}
+
+.speed-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(2, 6, 23, 0.85);
+  background: radial-gradient(circle at 30% 30%, #f0fdff, #67e8f9 45%, #a855f7 100%);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.55);
+  cursor: pointer;
+}
+
+.home-board-bg {
+  width: min(76vw, 640px);
+  aspect-ratio: 1;
+  padding: 18px;
+  border-radius: 36px;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.16), rgba(15, 23, 42, 0.2) 62%);
+  box-shadow: 0 40px 90px rgba(2, 6, 23, 0.45), inset 0 0 0 1px rgba(15, 23, 42, 0.35);
+  filter: blur(0.2px) saturate(0.95);
+  opacity: 0.34;
+  animation: home-board-float 22s ease-in-out infinite;
+}
+
+.home-board-canvas {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  --grid-size: 4;
+  --tile-gap: 10px;
+  --tile-size: calc((100% - (var(--tile-gap) * (var(--grid-size) - 1))) / var(--grid-size));
+}
+
+.home-board-tile {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: 16px;
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  background: var(--tile-bg);
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.25), 0 8px 20px rgba(15, 23, 42, 0.2);
+  animation: home-tile-breathe 11s ease-in-out infinite;
+}
+
+.home-board-swap {
+  transition: left 1.7s cubic-bezier(0.23, 1, 0.32, 1), top 1.7s cubic-bezier(0.23, 1, 0.32, 1), opacity 1.2s ease;
+}
+
+.home-board-empty {
+  border-style: dashed;
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.16);
+}
+
+@keyframes home-board-float {
+  0% {
+    transform: translate3d(-8px, -6px, 0) rotate(-1.2deg);
+  }
+  50% {
+    transform: translate3d(10px, 8px, 0) rotate(1.6deg);
+  }
+  100% {
+    transform: translate3d(-8px, -6px, 0) rotate(-1.2deg);
+  }
+}
+
+@keyframes home-tile-breathe {
+  0% {
+    opacity: 0.86;
+    filter: saturate(0.95);
+  }
+  30% {
+    opacity: 0.7;
+    filter: saturate(1.1);
+  }
+  65% {
+    opacity: 0.9;
+    filter: saturate(1);
+  }
+  100% {
+    opacity: 0.86;
+    filter: saturate(0.95);
+  }
+}

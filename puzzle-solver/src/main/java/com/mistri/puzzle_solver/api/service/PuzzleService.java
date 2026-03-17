@@ -2,6 +2,7 @@ package com.mistri.puzzle_solver.api.service;
 
 import com.mistri.puzzle_solver.api.request.GenerateRequest;
 import com.mistri.puzzle_solver.api.request.SolveRequest;
+import com.mistri.puzzle_solver.api.response.PuzzleMinMovesResponse;
 import com.mistri.puzzle_solver.api.response.PuzzleResponse;
 import com.mistri.puzzle_solver.api.response.PuzzleSolutionResponse;
 import com.mistri.puzzle_solver.core.algorithms.solvers.AStarSolver;
@@ -43,6 +44,18 @@ public class PuzzleService {
     }
 
     public PuzzleSolutionResponse risolvi(SolveRequest richiesta) {
+        List<Move> soluzione = trovaSoluzione(richiesta);
+
+        List<String> nomiMosse = soluzione.stream().map(Enum::name).collect(Collectors.toList());
+        return new PuzzleSolutionResponse(nomiMosse);
+    }
+
+    public PuzzleMinMovesResponse mosseMinime(SolveRequest richiesta) {
+        List<Move> soluzione = trovaSoluzione(richiesta);
+        return new PuzzleMinMovesResponse(soluzione.size());
+    }
+
+    private List<Move> trovaSoluzione(SolveRequest richiesta) {
         int[][] griglia = richiesta.getGriglia();
         if (griglia == null) {
             throw new IllegalArgumentException("Grid cannot be null");
@@ -65,7 +78,6 @@ public class PuzzleService {
             throw new RuntimeException("No solution found");
         }
 
-        List<String> nomiMosse = soluzione.stream().map(Enum::name).collect(Collectors.toList());
-        return new PuzzleSolutionResponse(nomiMosse);
+        return soluzione;
     }
 }

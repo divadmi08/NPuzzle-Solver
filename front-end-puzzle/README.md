@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Front-end NPuzzle Solver
 
-## Getting Started
+Frontend web del progetto NPuzzle (3x3 e 4x4), realizzato con Next.js + React + TypeScript.
 
-First, run the development server:
+## Cosa fa questa app
+
+- Mostra una Home da cui accedere a Gioco, Tabella Manuale e Impostazioni.
+- Permette gioco manuale con contatore mosse e timer.
+- Mostra il confronto tra mosse utente e minimo ottimale calcolato dal backend.
+- Supporta replay automatico della soluzione.
+- Supporta inserimento di board personalizzata con validazione input.
+
+## Prerequisiti
+
+- Node.js 20+
+- pnpm
+- Backend avviato su `http://localhost:8080` (default)
+
+## Installazione e avvio
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm i
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Frontend disponibile su `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Come giocare dal frontend
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Vai su Home.
+2. Apri Gioco.
+3. Seleziona 3x3 o 4x4.
+4. Muovi le tessere adiacenti allo spazio vuoto.
+5. Controlla tempo e numero mosse in alto.
+6. Se vuoi la soluzione automatica, premi Arrenditi.
 
-## Learn More
+## Configurazione backend URL
 
-To learn more about Next.js, take a look at the following resources:
+L'API usa per default:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `http://localhost:8080/puzzle`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Puoi cambiare con variabile ambiente:
 
-## Deploy on Vercel
+- `BACKEND_API_URL`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Build produzione
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm build
+pnpm start
+```
+
+## Documentazione tecnica
+
+- Guida frontend: `front-end-documentation.md`
+- Guida API/store dettagliata: `front-end-api-store-line-by-line.md`
